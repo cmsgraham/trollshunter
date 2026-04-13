@@ -8,7 +8,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-inner">
         <Link to="/" className="sidebar-logo" title="TrollsHunter">
-          <img src="/logos/trolls_hunter_letters.png" alt="TrollsHunter" className="sidebar-logo-full" />
+          <img src="/logos/trolls_hunter_full_logo.png" alt="TrollsHunter" className="sidebar-logo-full" />
           <img src="/logos/trolls_hunter_logo_only.png" alt="TrollsHunter" className="sidebar-logo-icon" />
         </Link>
 
