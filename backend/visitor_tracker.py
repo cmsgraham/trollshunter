@@ -1,4 +1,4 @@
-"""Visitor tracking middleware — logs page visits and syncs to S3."""
+"""Visitor tracking — /track endpoint + S3 sync."""
 
 import json
 import os
@@ -10,8 +10,8 @@ from pathlib import Path
 import boto3
 from botocore.exceptions import ClientError
 from ua_parser import user_agent_parser
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("visitor_tracker")
 
@@ -27,6 +27,8 @@ S3_BUCKET = os.getenv("LINODE_BUCKET", "qrengagement")
 S3_PREFIX = "trollshunter-visitors"
 
 SYNC_INTERVAL = 5 * 60  # 5 minutes
+
+router = APIRouter(tags=["tracking"])
 
 
 def _ensure_log_file():
@@ -126,71 +128,50 @@ def _get_client_ip(request: Request) -> str:
     return request.client.host if request.client else ""
 
 
-class VisitorTrackingMiddleware(BaseHTTPMiddleware):
-    """Logs visitor info for HTML page requests (skips static assets and API calls)."""
+@router.post("/track")
+async def track_visit(request: Request):
+    """Record a page visit. Called by the frontend on page load."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
 
-    async def dispatch(self, request: Request, call_next):
-        path = request.url.path
+    ua_string = request.headers.get("user-agent", "")
+    ua = _parse_ua(ua_string)
+    ip = _get_client_ip(request)
 
-        # Only track page-level requests: root, no extension, or .html
-        # Skip API routes, static assets, health checks
-        should_track = (
-            not path.startswith("/api/")
-            and not path.startswith("/docs")
-            and not path.startswith("/redoc")
-            and not path.startswith("/openapi")
-            and path not in ("/health",)
-            and (
-                "." not in path.split("/")[-1]  # no extension
-                or path.endswith(".html")
-            )
-        )
+    visitor = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "ip": ip,
+        "method": "GET",
+        "path": body.get("path", "/"),
+        "userAgent": ua_string,
+        "browser": ua["browser"],
+        "os": ua["os"],
+        "device": ua["device"],
+        "referer": body.get("referer", request.headers.get("referer", "")),
+        "acceptLanguage": request.headers.get("accept-language", ""),
+        "acceptEncoding": request.headers.get("accept-encoding", ""),
+        "connection": request.headers.get("connection", ""),
+        "host": request.headers.get("host", ""),
+        "dnt": request.headers.get("dnt", ""),
+        "xForwardedFor": request.headers.get("x-forwarded-for", ""),
+        "xRealIp": request.headers.get("x-real-ip", ""),
+        "protocol": request.url.scheme,
+        "secure": request.url.scheme == "https",
+    }
 
-        response = await call_next(request)
+    _ensure_log_file()
+    try:
+        data = json.loads(LOG_FILE.read_text())
+    except (json.JSONDecodeError, FileNotFoundError):
+        data = []
+    data.append(visitor)
+    LOG_FILE.write_text(json.dumps(data, indent=2))
+    logger.info(
+        "[%s] %s - %s - %s on %s",
+        visitor["timestamp"], ip, visitor["path"],
+        ua["browser"].get("name", "Unknown"), ua["os"].get("name", "Unknown"),
+    )
 
-        if should_track and request.method == "GET":
-            try:
-                self._log_visitor(request)
-            except Exception as e:
-                logger.error("Visitor logging error: %s", e)
-
-        return response
-
-    def _log_visitor(self, request: Request):
-        ua_string = request.headers.get("user-agent", "")
-        ua = _parse_ua(ua_string)
-        ip = _get_client_ip(request)
-
-        visitor = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "ip": ip,
-            "method": request.method,
-            "path": request.url.path,
-            "userAgent": ua_string,
-            "browser": ua["browser"],
-            "os": ua["os"],
-            "device": ua["device"],
-            "referer": request.headers.get("referer", ""),
-            "acceptLanguage": request.headers.get("accept-language", ""),
-            "acceptEncoding": request.headers.get("accept-encoding", ""),
-            "connection": request.headers.get("connection", ""),
-            "host": request.headers.get("host", ""),
-            "dnt": request.headers.get("dnt", ""),
-            "xForwardedFor": request.headers.get("x-forwarded-for", ""),
-            "xRealIp": request.headers.get("x-real-ip", ""),
-            "protocol": request.url.scheme,
-            "secure": request.url.scheme == "https",
-        }
-
-        _ensure_log_file()
-        try:
-            data = json.loads(LOG_FILE.read_text())
-        except (json.JSONDecodeError, FileNotFoundError):
-            data = []
-        data.append(visitor)
-        LOG_FILE.write_text(json.dumps(data, indent=2))
-        logger.info(
-            "[%s] %s - %s %s - %s on %s",
-            visitor["timestamp"], ip, request.method, request.url.path,
-            ua["browser"].get("name", "Unknown"), ua["os"].get("name", "Unknown"),
-        )
+    return JSONResponse({"ok": True}, status_code=200)

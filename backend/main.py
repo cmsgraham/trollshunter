@@ -9,7 +9,7 @@ import httpx
 from config import get_settings
 from database import init_db
 from routers import auth_router, trolls, votes, admin
-from visitor_tracker import VisitorTrackingMiddleware, _sync_loop
+from visitor_tracker import router as tracking_router, _sync_loop
 
 settings = get_settings()
 
@@ -35,14 +35,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Visitor tracking middleware
-app.add_middleware(VisitorTrackingMiddleware)
-
 # Include routers
 app.include_router(auth_router.router)
 app.include_router(trolls.router)
 app.include_router(votes.router)
 app.include_router(admin.router)
+app.include_router(tracking_router)
 
 
 @app.on_event("startup")

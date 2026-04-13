@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import MobileNav from './components/MobileNav'
 import TrollList from './components/TrollList'
@@ -19,6 +19,16 @@ export function useAuth() {
 export default function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const location = useLocation()
+
+  // Track page visits
+  useEffect(() => {
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: location.pathname, referer: document.referrer }),
+    }).catch(() => {})
+  }, [location.pathname])
 
   const loadUser = useCallback(async () => {
     const token = localStorage.getItem('token')
