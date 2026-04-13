@@ -93,7 +93,6 @@ class TrollOut(BaseModel):
     x_profile_image_url: Optional[str] = None
     x_banner_url: Optional[str] = None
     bio: Optional[str] = None
-    recent_posts: list[str] = []
     category: str
     country: Optional[str] = None
     total_reports: int
@@ -104,6 +103,7 @@ class TrollOut(BaseModel):
     created_at: datetime
     profile_url: str = ""
     block_url: str = ""
+    reports: list['ReportOut'] = []
 
     class Config:
         from_attributes = True
@@ -114,6 +114,21 @@ class TrollListOut(BaseModel):
     total: int
     page: int
     per_page: int
+
+
+# --- Report Schemas ---
+
+class ReportOut(BaseModel):
+    id: int
+    reporter_username: Optional[str] = None
+    reporter_display_name: Optional[str] = None
+    reporter_profile_image_url: Optional[str] = None
+    reason: Optional[str] = None
+    evidence_url: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 # --- Vote Schemas ---

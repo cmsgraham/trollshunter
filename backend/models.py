@@ -41,7 +41,6 @@ class Troll(Base):
     x_profile_image_url = Column(String(512), nullable=True)
     x_banner_url = Column(String(512), nullable=True)
     bio = Column(Text, nullable=True)
-    recent_posts = Column(Text, nullable=True)  # JSON array of last 5 tweet texts
     category = Column(String(50), nullable=False, default="troll")
     country = Column(String(2), nullable=True, index=True)  # ISO 3166-1 alpha-2
     total_reports = Column(Integer, default=1)

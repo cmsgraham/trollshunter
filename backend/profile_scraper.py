@@ -16,7 +16,6 @@ async def fetch_x_profile(username: str) -> dict:
         "profile_image_url": None,
         "banner_url": None,
         "bio": None,
-        "recent_posts": [],
     }
 
     try:
@@ -59,23 +58,7 @@ async def fetch_x_profile(username: str) -> dict:
                 if bio_match and bio_match.group(1):
                     result["bio"] = bio_match.group(1)
 
-                # Recent posts (last 5 tweet texts)
-                raw_texts = re.findall(r'"text"\s*:\s*"([^"]{10,})"', text)
-                seen = set()
-                posts = []
-                for t in raw_texts:
-                    # Decode JSON string escapes properly
-                    try:
-                        decoded = json.loads('"' + t + '"')
-                    except Exception:
-                        decoded = t
-                    cleaned = decoded.strip()
-                    if cleaned not in seen:
-                        seen.add(cleaned)
-                        posts.append(cleaned)
-                    if len(posts) >= 5:
-                        break
-                result["recent_posts"] = posts
+
 
         # Fallback: og: meta tags (if syndication didn't get profile image)
         if not result["profile_image_url"]:

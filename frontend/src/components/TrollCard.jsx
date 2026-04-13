@@ -79,35 +79,36 @@ export default function TrollCard({ troll, onRefresh }) {
       {/* Bio */}
       {troll.bio && <p className="x-bio">{troll.bio}</p>}
 
-      {/* Recent Posts */}
-      {troll.recent_posts && troll.recent_posts.length > 0 && (
-        <div className="x-recent-posts">
-          <div className="x-recent-posts-header">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21-.36.1-.74.15-1.13.15-.28 0-.54-.03-.8-.08.54 1.69 2.11 2.95 3.98 2.98-1.46 1.16-3.31 1.84-5.33 1.84-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/></svg>
-            Recent Posts
+      {/* Reporters */}
+      {troll.reports && troll.reports.length > 0 && (
+        <div className="x-reporters">
+          <div className="x-reporters-header">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+            Reported by
           </div>
-          <div className="x-recent-posts-list">
-            {troll.recent_posts.map((post, i) => {
-              const urlRegex = /(https?:\/\/t\.co\/[a-zA-Z0-9]+)/g
-              const textPart = post.replace(urlRegex, '').trim()
-              const urls = post.match(urlRegex) || []
-              return (
-                <div key={i} className="x-recent-post-card">
-                  <div className="x-recent-post-index">{i + 1}</div>
-                  <div className="x-recent-post-content">
-                    {textPart && <p className="x-recent-post-text">{textPart}</p>}
-                    {urls.length > 0 && (
-                      <div className="x-recent-post-links">
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M18.36 5.64c-1.95-1.96-5.11-1.96-7.07 0L9.88 7.05l1.41 1.42 1.42-1.42c1.17-1.17 3.07-1.17 4.24 0 1.17 1.17 1.17 3.07 0 4.24l-1.42 1.42 1.42 1.41 1.41-1.41c1.96-1.96 1.96-5.12 0-7.07zm-2.12 3.53l-7.07 7.07-1.41-1.41 7.07-7.07 1.41 1.41zm-4.95 7.78l-1.42 1.42c-1.17 1.17-3.07 1.17-4.24 0-1.17-1.17-1.17-3.07 0-4.24l1.42-1.42-1.42-1.41-1.41 1.41c-1.96 1.96-1.96 5.12 0 7.07 1.95 1.96 5.11 1.96 7.07 0l1.41-1.42-1.41-1.41z"/></svg>
-                        {urls.map((url, j) => (
-                          <a key={j} href={url} target="_blank" rel="noopener noreferrer" className="x-recent-post-link">{url.replace('https://', '')}</a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+          <div className="x-reporters-list">
+            {troll.reports.map((report) => (
+              <div key={report.id} className="x-reporter-item">
+                <div className="x-reporter-avatar">
+                  {report.reporter_profile_image_url ? (
+                    <img src={proxyImg(report.reporter_profile_image_url)} alt="" />
+                  ) : (
+                    <span>{(report.reporter_username || '?')[0].toUpperCase()}</span>
+                  )}
                 </div>
-              )
-            })}
+                <div className="x-reporter-info">
+                  <span className="x-reporter-name">
+                    {report.reporter_display_name || report.reporter_username || 'Anonymous'}
+                  </span>
+                  {report.reason && <span className="x-reporter-reason">{report.reason}</span>}
+                  {report.evidence_url && (
+                    <a href={report.evidence_url} target="_blank" rel="noopener noreferrer" className="x-reporter-evidence">
+                      View evidence
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

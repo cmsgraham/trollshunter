@@ -1,12 +1,12 @@
 """Admin routes for managing troll reports."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, subqueryload
 from sqlalchemy import func
 
 from database import get_db
-from models import Troll, User
-from schemas import TrollOut, TrollListOut
+from models import Troll, TrollReport, User
+from schemas import TrollOut, TrollListOut, ReportOut
 from routers.deps import get_current_user
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -19,12 +19,19 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
 
 
 def troll_to_out(troll: Troll) -> TrollOut:
-    import json
     obj = troll.__dict__.copy()
-    try:
-        obj["recent_posts"] = json.loads(troll.recent_posts) if troll.recent_posts else []
-    except Exception:
-        obj["recent_posts"] = []
+    obj["reports"] = [
+        ReportOut(
+            id=r.id,
+            reporter_username=r.reporter.x_username or r.reporter.username if r.reporter else None,
+            reporter_display_name=r.reporter.x_display_name or r.reporter.display_name if r.reporter else None,
+            reporter_profile_image_url=r.reporter.x_profile_image_url if r.reporter else None,
+            reason=r.reason,
+            evidence_url=r.evidence_url,
+            created_at=r.created_at,
+        )
+        for r in (troll.reports if troll.reports else [])
+    ]
     data = TrollOut.model_validate(obj)
     data.profile_url = f"https://x.com/{troll.x_username}"
     data.block_url = f"https://x.com/intent/user?screen_name={troll.x_username}"
@@ -39,7 +46,7 @@ async def list_pending(
     admin: User = Depends(require_admin),
 ):
     """List trolls pending approval."""
-    query = db.query(Troll).filter(Troll.is_approved == False)
+    query = db.query(Troll).options(subqueryload(Troll.reports).joinedload(TrollReport.reporter)).filter(Troll.is_approved == False)
     total = query.count()
     trolls = query.order_by(Troll.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
     return TrollListOut(
@@ -88,7 +95,7 @@ async def list_disputed(
     admin: User = Depends(require_admin),
 ):
     """List approved trolls that have received disputes (downvotes > 0)."""
-    query = db.query(Troll).filter(Troll.is_approved == True, Troll.downvotes > 0)
+    query = db.query(Troll).options(subqueryload(Troll.reports).joinedload(TrollReport.reporter)).filter(Troll.is_approved == True, Troll.downvotes > 0)
     total = query.count()
     trolls = query.order_by(Troll.downvotes.desc()).offset((page - 1) * per_page).limit(per_page).all()
     return TrollListOut(
