@@ -52,8 +52,8 @@ class Troll(Base):
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
-    reports = relationship("TrollReport", back_populates="troll")
-    votes = relationship("Vote", back_populates="troll")
+    reports = relationship("TrollReport", back_populates="troll", cascade="all, delete-orphan")
+    votes = relationship("Vote", back_populates="troll", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("ix_trolls_category", "category"),
