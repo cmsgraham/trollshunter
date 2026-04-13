@@ -1,0 +1,10 @@
+*.pyc
+__pycache__/
+venv/
+node_modules/
+.vite/
+dist/
+trollhunter.db
+.env
+.env.production
+*.log
