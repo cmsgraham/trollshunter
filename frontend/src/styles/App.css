@@ -806,6 +806,48 @@ a:hover { text-decoration: underline; }
 .admin-reporter-evidence:hover {
   text-decoration: underline;
 }
+.admin-report-target {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: var(--bg-tertiary, rgba(255,255,255,0.05));
+  border-radius: 8px;
+}
+.admin-report-target-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  display: block;
+}
+.admin-report-target-troll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.admin-report-target-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-status-badge {
+  font-size: 0.7rem;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+.admin-status-approved {
+  background: rgba(0, 186, 124, 0.15);
+  color: #00ba7c;
+}
+.admin-status-pending {
+  background: rgba(255, 122, 0, 0.15);
+  color: #ff7a00;
+}
 .admin-meta {
   display: flex;
   align-items: center;

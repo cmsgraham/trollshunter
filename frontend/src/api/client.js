@@ -175,3 +175,10 @@ export async function removeTroll(trollId) {
   }
   return res.json();
 }
+
+export async function fetchReports({ page = 1 } = {}) {
+  const params = new URLSearchParams({ page, per_page: 20 });
+  const res = await fetch(`${API_BASE}/admin/reports?${params}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch reports');
+  return res.json();
+}

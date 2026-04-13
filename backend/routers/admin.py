@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from database import get_db
 from models import Troll, TrollReport, User
-from schemas import TrollOut, TrollListOut, TrollAdminOut, TrollAdminListOut, ReportOut
+from schemas import TrollOut, TrollListOut, TrollAdminOut, TrollAdminListOut, ReportOut, ReportDetailOut, ReportDetailListOut
 from routers.deps import get_current_user
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -134,6 +134,45 @@ async def remove_troll(
     db.delete(troll)
     db.commit()
     return {"success": True, "message": f"@{troll.x_username} removed"}
+
+
+@router.get("/reports", response_model=ReportDetailListOut)
+async def list_all_reports(
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """List all reports with troll and reporter details."""
+    query = db.query(TrollReport).options(
+        joinedload(TrollReport.reporter),
+        joinedload(TrollReport.troll),
+    )
+    total = query.count()
+    reports = query.order_by(TrollReport.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+    return ReportDetailListOut(
+        reports=[
+            ReportDetailOut(
+                id=r.id,
+                reporter_username=r.reporter.x_username or r.reporter.username if r.reporter else None,
+                reporter_display_name=r.reporter.x_display_name or r.reporter.display_name if r.reporter else None,
+                reporter_profile_image_url=r.reporter.x_profile_image_url if r.reporter else None,
+                reason=r.reason,
+                evidence_url=r.evidence_url,
+                created_at=r.created_at,
+                troll_id=r.troll_id,
+                troll_username=r.troll.x_username if r.troll else 'unknown',
+                troll_display_name=r.troll.x_display_name if r.troll else None,
+                troll_profile_image_url=r.troll.x_profile_image_url if r.troll else None,
+                troll_category=r.troll.category if r.troll else 'troll',
+                troll_is_approved=r.troll.is_approved if r.troll else False,
+            )
+            for r in reports
+        ],
+        total=total,
+        page=page,
+        per_page=per_page,
+    )
 
 
 @router.post("/make-admin/{user_id}")

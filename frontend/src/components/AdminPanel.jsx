@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchPending, approveTroll, rejectTroll, fetchDisputed, dismissDisputes, removeTroll } from '../api/client'
+import { fetchPending, approveTroll, rejectTroll, fetchDisputed, dismissDisputes, removeTroll, fetchReports } from '../api/client'
 import { useAuth } from '../App'
 
 const categoryColors = {
@@ -22,6 +22,9 @@ export default function AdminPanel() {
   const [disputed, setDisputed] = useState([])
   const [disputedTotal, setDisputedTotal] = useState(0)
   const [disputedPage, setDisputedPage] = useState(1)
+  const [reports, setReports] = useState([])
+  const [reportsTotal, setReportsTotal] = useState(0)
+  const [reportsPage, setReportsPage] = useState(1)
   const [error, setError] = useState('')
   const [actionLoading, setActionLoading] = useState(null)
 
@@ -47,12 +50,24 @@ export default function AdminPanel() {
     }
   }, [disputedPage])
 
+  const loadReports = useCallback(async () => {
+    try {
+      const data = await fetchReports({ page: reportsPage })
+      setReports(data.reports)
+      setReportsTotal(data.total)
+      setError('')
+    } catch (err) {
+      setError(err.message)
+    }
+  }, [reportsPage])
+
   useEffect(() => {
     if (user?.is_admin) {
       loadPending()
       loadDisputed()
+      loadReports()
     }
-  }, [user, loadPending, loadDisputed])
+  }, [user, loadPending, loadDisputed, loadReports])
 
   if (!user || !user.is_admin) {
     return (
@@ -120,6 +135,7 @@ export default function AdminPanel() {
 
   const totalPages = Math.ceil(total / 20)
   const disputedTotalPages = Math.ceil(disputedTotal / 20)
+  const reportsTotalPages = Math.ceil(reportsTotal / 20)
 
   return (
     <>
@@ -139,6 +155,12 @@ export default function AdminPanel() {
           onClick={() => handleTabChange('disputed')}
         >
           Disputed {disputedTotal > 0 && <span className="admin-tab-badge admin-tab-badge-red">{disputedTotal}</span>}
+        </button>
+        <button
+          className={`admin-tab${tab === 'reports' ? ' admin-tab-active' : ''}`}
+          onClick={() => handleTabChange('reports')}
+        >
+          Reports {reportsTotal > 0 && <span className="admin-tab-badge">{reportsTotal}</span>}
         </button>
       </div>
 
@@ -375,6 +397,90 @@ export default function AdminPanel() {
               <button
                 onClick={() => setDisputedPage(p => Math.min(disputedTotalPages, p + 1))}
                 disabled={disputedPage === disputedTotalPages}
+                className="btn-pill btn-pill-sm btn-pill-secondary"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === 'reports' && (
+        <>
+          <div className="admin-feed">
+            {reports.map(report => (
+              <div key={report.id} className="admin-card">
+                <div className="admin-card-left">
+                  {report.reporter_profile_image_url ? (
+                    <img src={proxyImg(report.reporter_profile_image_url)} alt="" className="admin-avatar" />
+                  ) : (
+                    <div className="admin-avatar admin-avatar-placeholder">
+                      {(report.reporter_username || '?')[0].toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="admin-card-body">
+                  <div className="admin-card-header">
+                    <span className="x-display-name">
+                      {report.reporter_display_name || report.reporter_username || 'Anonymous'}
+                    </span>
+                    {report.reporter_username && (
+                      <span className="x-handle">@{report.reporter_username}</span>
+                    )}
+                    <span className="admin-reporter-date">
+                      {new Date(report.created_at).toLocaleDateString()} {new Date(report.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                  </div>
+                  <div className="admin-report-target">
+                    <span className="admin-report-target-label">Reported:</span>
+                    <div className="admin-report-target-troll">
+                      {report.troll_profile_image_url ? (
+                        <img src={proxyImg(report.troll_profile_image_url)} alt="" className="admin-report-target-avatar" />
+                      ) : (
+                        <div className="admin-report-target-avatar admin-avatar-placeholder">
+                          {report.troll_username[0].toUpperCase()}
+                        </div>
+                      )}
+                      <span className="x-display-name">{report.troll_display_name || `@${report.troll_username}`}</span>
+                      <span className="x-handle">@{report.troll_username}</span>
+                      <span className="category-badge" style={{ backgroundColor: categoryColors[report.troll_category] }}>
+                        {report.troll_category}
+                      </span>
+                      {report.troll_is_approved && <span className="admin-status-badge admin-status-approved">Approved</span>}
+                      {!report.troll_is_approved && <span className="admin-status-badge admin-status-pending">Pending</span>}
+                    </div>
+                  </div>
+                  {report.reason && <p className="admin-reporter-reason">{report.reason}</p>}
+                  {report.evidence_url && (
+                    <a href={report.evidence_url} target="_blank" rel="noopener noreferrer" className="admin-reporter-evidence">
+                      📎 Evidence: {report.evidence_url.replace('https://', '')}
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {reports.length === 0 && !error && (
+            <div className="empty-state">
+              <p>No reports yet.</p>
+            </div>
+          )}
+
+          {reportsTotalPages > 1 && (
+            <div className="pagination">
+              <button
+                onClick={() => setReportsPage(p => Math.max(1, p - 1))}
+                disabled={reportsPage === 1}
+                className="btn-pill btn-pill-sm btn-pill-secondary"
+              >
+                Previous
+              </button>
+              <span className="page-info">Page {reportsPage} of {reportsTotalPages}</span>
+              <button
+                onClick={() => setReportsPage(p => Math.min(reportsTotalPages, p + 1))}
+                disabled={reportsPage === reportsTotalPages}
                 className="btn-pill btn-pill-sm btn-pill-secondary"
               >
                 Next

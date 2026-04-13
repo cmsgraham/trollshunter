@@ -141,6 +141,22 @@ class ReportOut(BaseModel):
         from_attributes = True
 
 
+class ReportDetailOut(ReportOut):
+    troll_id: int
+    troll_username: str
+    troll_display_name: Optional[str] = None
+    troll_profile_image_url: Optional[str] = None
+    troll_category: str = "troll"
+    troll_is_approved: bool = False
+
+
+class ReportDetailListOut(BaseModel):
+    reports: list[ReportDetailOut]
+    total: int
+    page: int
+    per_page: int
+
+
 # --- Vote Schemas ---
 
 class VoteCreate(BaseModel):
