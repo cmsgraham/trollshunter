@@ -168,6 +168,42 @@ export default function AdminPanel() {
                     {troll.country && <span className="country-badge">{troll.country}</span>}
                   </div>
                   {troll.bio && <p className="admin-bio">{troll.bio}</p>}
+                  {/* Reporter details */}
+                  {troll.reports && troll.reports.length > 0 && (
+                    <div className="admin-reporters">
+                      <div className="admin-reporters-title">Reports ({troll.reports.length})</div>
+                      {troll.reports.map((report) => (
+                        <div key={report.id} className="admin-reporter-item">
+                          <div className="admin-reporter-avatar">
+                            {report.reporter_profile_image_url ? (
+                              <img src={proxyImg(report.reporter_profile_image_url)} alt="" />
+                            ) : (
+                              <span>{(report.reporter_username || '?')[0].toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className="admin-reporter-info">
+                            <div className="admin-reporter-header">
+                              <span className="admin-reporter-name">
+                                {report.reporter_display_name || report.reporter_username || 'Anonymous'}
+                              </span>
+                              {report.reporter_username && (
+                                <span className="admin-reporter-handle">@{report.reporter_username}</span>
+                              )}
+                              <span className="admin-reporter-date">
+                                {new Date(report.created_at).toLocaleDateString()} {new Date(report.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </span>
+                            </div>
+                            {report.reason && <p className="admin-reporter-reason">{report.reason}</p>}
+                            {report.evidence_url && (
+                              <a href={report.evidence_url} target="_blank" rel="noopener noreferrer" className="admin-reporter-evidence">
+                                📎 Evidence: {report.evidence_url.replace('https://', '')}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="admin-meta">
                     <span>{troll.total_reports} report{troll.total_reports !== 1 ? 's' : ''}</span>
                     <span>·</span>
@@ -250,9 +286,10 @@ export default function AdminPanel() {
                     {troll.country && <span className="country-badge">{troll.country}</span>}
                   </div>
                   {troll.bio && <p className="admin-bio">{troll.bio}</p>}
-                  {/* Reporter info */}
+                  {/* Reporter details */}
                   {troll.reports && troll.reports.length > 0 && (
                     <div className="admin-reporters">
+                      <div className="admin-reporters-title">Reports ({troll.reports.length})</div>
                       {troll.reports.map((report) => (
                         <div key={report.id} className="admin-reporter-item">
                           <div className="admin-reporter-avatar">
@@ -263,13 +300,21 @@ export default function AdminPanel() {
                             )}
                           </div>
                           <div className="admin-reporter-info">
-                            <span className="admin-reporter-name">
-                              {report.reporter_display_name || report.reporter_username || 'Anonymous'}
-                            </span>
-                            {report.reason && <span className="admin-reporter-reason">{report.reason}</span>}
+                            <div className="admin-reporter-header">
+                              <span className="admin-reporter-name">
+                                {report.reporter_display_name || report.reporter_username || 'Anonymous'}
+                              </span>
+                              {report.reporter_username && (
+                                <span className="admin-reporter-handle">@{report.reporter_username}</span>
+                              )}
+                              <span className="admin-reporter-date">
+                                {new Date(report.created_at).toLocaleDateString()} {new Date(report.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </span>
+                            </div>
+                            {report.reason && <p className="admin-reporter-reason">{report.reason}</p>}
                             {report.evidence_url && (
                               <a href={report.evidence_url} target="_blank" rel="noopener noreferrer" className="admin-reporter-evidence">
-                                View evidence ↗
+                                📎 Evidence: {report.evidence_url.replace('https://', '')}
                               </a>
                             )}
                           </div>
