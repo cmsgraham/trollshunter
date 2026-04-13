@@ -8,6 +8,7 @@ import AuthPage from './components/AuthPage'
 import AuthCallback from './components/AuthCallback'
 import Stats from './components/Stats'
 import AdminPanel from './components/AdminPanel'
+import Unsubscribe from './components/Unsubscribe'
 import { getMe } from './api/client'
 
 const AuthContext = createContext(null)
@@ -75,6 +76,7 @@ export default function App() {
             <Route path="/auth/success" element={<AuthCallback />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
           </Routes>
         </main>
         <MobileNav />

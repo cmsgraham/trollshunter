@@ -64,11 +64,38 @@ services:
       - webroot:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 12h & wait $${!}; certbot renew; done'"
 
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    container_name: trollhunter-mailserver
+    hostname: mail.trollshunter.com
+    restart: unless-stopped
+    env_file: ./mail/mailserver.env
+    ports:
+      - "25:25"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - mail-data:/var/mail
+      - mail-state:/var/mail-state
+      - mail-logs:/var/log/mail
+      - ./mail/config/:/tmp/docker-mailserver/
+      - certbot-etc:/etc/letsencrypt:ro
+    cap_add:
+      - NET_ADMIN
+    healthcheck:
+      test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
+      timeout: 3s
+      retries: 0
+
 volumes:
   db-data:
   certbot-etc:
   certbot-var:
   webroot:
+  mail-data:
+  mail-state:
+  mail-logs:
 
 networks:
   internal:

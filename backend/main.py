@@ -4,6 +4,7 @@ import asyncio
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from pydantic import BaseModel, EmailStr
 import httpx
 
 from config import get_settings
@@ -98,3 +99,23 @@ async def proxy_image(url: str = Query(...)):
         media_type=resp.headers.get("content-type", "image/jpeg"),
         headers={"Cache-Control": "public, max-age=86400"},
     )
+
+
+class UnsubscribeRequest(BaseModel):
+    email: EmailStr
+
+
+@app.post("/unsubscribe")
+async def unsubscribe_email(data: UnsubscribeRequest):
+    """Add email to unsubscribe list."""
+    from database import get_db
+    from models import Unsubscribe as UnsubModel
+    db = next(get_db())
+    try:
+        existing = db.query(UnsubModel).filter(UnsubModel.email == data.email.lower()).first()
+        if not existing:
+            db.add(UnsubModel(email=data.email.lower()))
+            db.commit()
+        return {"success": True, "message": "Unsubscribed"}
+    finally:
+        db.close()

@@ -99,4 +99,12 @@ class Vote(Base):
     )
 
 
+class Unsubscribe(Base):
+    __tablename__ = "unsubscribes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 
