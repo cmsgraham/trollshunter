@@ -171,11 +171,11 @@ a:hover { color: var(--accent-hover); }
 }
 .sidebar-logo:hover { opacity: 0.85; text-decoration: none; }
 .sidebar-logo img {
-  height: 36px;
+  height: 44px;
   width: auto;
 }
 .sidebar-logo-icon {
-  height: 32px;
+  height: 38px;
   width: auto;
   display: none;
 }
@@ -1204,11 +1204,13 @@ a:hover { color: var(--accent-hover); }
   /* --- Mobile Brand Hero --- */
   .mobile-brand-hero {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
-    padding: 20px 20px 18px;
+    text-align: center;
+    gap: 12px;
+    padding: 24px 20px 20px;
     background:
-      linear-gradient(135deg, rgba(232, 101, 26, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 0%, rgba(232, 101, 26, 0.10) 0%, transparent 70%),
       var(--bg-base);
     border-bottom: 1px solid var(--border);
     position: sticky;
@@ -1216,13 +1218,12 @@ a:hover { color: var(--accent-hover); }
     z-index: 10;
   }
   .mobile-brand-logo {
-    width: 44px;
+    width: 64px;
     height: auto;
-    flex-shrink: 0;
-    filter: drop-shadow(0 2px 12px rgba(232, 101, 26, 0.3));
+    filter: drop-shadow(0 4px 18px rgba(232, 101, 26, 0.35));
   }
   .mobile-brand-text h1 {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--text-primary);
@@ -1231,7 +1232,7 @@ a:hover { color: var(--accent-hover); }
   .mobile-brand-text p {
     font-size: 0.75rem;
     color: var(--text-tertiary);
-    margin-top: 2px;
+    margin-top: 3px;
     font-weight: 400;
   }
 
