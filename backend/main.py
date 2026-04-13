@@ -1,5 +1,6 @@
 """TrollHunter API - Community-driven troll/bot blocklist for X."""
 
+import asyncio
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -8,6 +9,7 @@ import httpx
 from config import get_settings
 from database import init_db
 from routers import auth_router, trolls, votes, admin
+from visitor_tracker import VisitorTrackingMiddleware, _sync_loop
 
 settings = get_settings()
 
@@ -33,6 +35,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Visitor tracking middleware
+app.add_middleware(VisitorTrackingMiddleware)
+
 # Include routers
 app.include_router(auth_router.router)
 app.include_router(trolls.router)
@@ -43,6 +48,8 @@ app.include_router(admin.router)
 @app.on_event("startup")
 def on_startup():
     init_db()
+    # Start background S3 sync for visitor logs
+    asyncio.get_event_loop().create_task(_sync_loop())
 
 
 @app.get("/")

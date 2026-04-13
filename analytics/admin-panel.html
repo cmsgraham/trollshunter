@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrollShunter - Visitor Analytics</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      padding: 20px;
+    }
+    h1 { color: #58a6ff; margin-bottom: 8px; }
+    .subtitle { color: #8b949e; margin-bottom: 24px; }
+    .stats { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .stat-card {
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 8px; padding: 16px 24px; min-width: 150px;
+    }
+    .stat-card .number { font-size: 2rem; color: #58a6ff; font-weight: bold; }
+    .stat-card .label { color: #8b949e; font-size: 0.85rem; }
+    .controls {
+      display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;
+    }
+    input, select {
+      background: #161b22; border: 1px solid #30363d; color: #c9d1d9;
+      padding: 8px 12px; border-radius: 6px; font-size: 0.9rem;
+    }
+    input { width: 300px; }
+    button {
+      background: #238636; color: #fff; border: none;
+      padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+    }
+    button:hover { background: #2ea043; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+      background: #161b22; border: 1px solid #30363d; padding: 10px 12px;
+      text-align: left; color: #58a6ff; position: sticky; top: 0; cursor: pointer;
+      user-select: none;
+    }
+    th:hover { background: #1c2333; }
+    th .sort-arrow { font-size: 0.7rem; margin-left: 4px; color: #8b949e; }
+    th .sort-arrow.active { color: #58a6ff; }
+    td {
+      border: 1px solid #21262d; padding: 8px 12px;
+      max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    tr:hover td { background: #161b22; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .badge-mobile { background: #1f6feb33; color: #58a6ff; }
+    .badge-desktop { background: #23863633; color: #3fb950; }
+    .badge-tablet { background: #da363333; color: #f85149; }
+    .table-wrap { overflow-x: auto; max-height: 70vh; overflow-y: auto; }
+    .loading { text-align: center; padding: 40px; color: #8b949e; }
+    #exportBtn { background: #1f6feb; }
+    #exportBtn:hover { background: #388bfd; }
+    .ip-link { color: #58a6ff; cursor: pointer; text-decoration: underline; font-weight: bold; }
+    .ip-link:hover { color: #79c0ff; }
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+      padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
+    }
+    .modal h2 { color: #58a6ff; margin-bottom: 16px; font-size: 1.2rem; }
+    .modal .close-btn {
+      float: right; background: #da3633; color: #fff; border: none;
+      padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+    }
+    .modal .close-btn:hover { background: #f85149; }
+    .geo-row { display: flex; padding: 8px 0; border-bottom: 1px solid #21262d; }
+    .geo-label { color: #8b949e; width: 140px; flex-shrink: 0; font-size: 0.85rem; }
+    .geo-value { color: #c9d1d9; font-size: 0.85rem; }
+    .geo-flag { font-size: 1.5rem; margin-right: 8px; }
+    .geo-map { margin-top: 12px; border-radius: 8px; overflow: hidden; }
+    .geo-map iframe { width: 100%; height: 200px; border: none; }
+    .geo-loading { text-align: center; padding: 20px; color: #8b949e; }
+    .status-bar { margin-bottom: 12px; font-size: 0.8rem; color: #8b949e; }
+    .status-bar .success { color: #3fb950; }
+    .status-bar .error { color: #f85149; }
+  </style>
+</head>
+<body>
+  <h1>TrollShunter — Visitor Analytics</h1>
+  <p class="subtitle">Local admin panel — data sourced from Linode Object Storage (trollshunter-visitors/)</p>
+  <div class="status-bar" id="statusBar">Loading data...</div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="number" id="totalVisitors">-</div><div class="label">Total Visits</div></div>
+    <div class="stat-card"><div class="number" id="uniqueIPs">-</div><div class="label">Unique IPs</div></div>
+    <div class="stat-card"><div class="number" id="mobileCount">-</div><div class="label">Mobile</div></div>
+    <div class="stat-card"><div class="number" id="desktopCount">-</div><div class="label">Desktop</div></div>
+    <div class="stat-card"><div class="number" id="todayCount">-</div><div class="label">Today</div></div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Filter by IP, browser, OS, country, referer..." oninput="renderTable()" />
+    <select id="deviceFilter" onchange="renderTable()">
+      <option value="">All Devices</option>
+      <option value="mobile">Mobile</option>
+      <option value="desktop">Desktop</option>
+      <option value="tablet">Tablet</option>
+    </select>
+    <button onclick="forceRefresh()">Refresh</button>
+    <button id="exportBtn" onclick="exportCSV()">Export CSV</button>
+  </div>
+
+  <!-- IP Geolocation Modal -->
+  <div class="modal-overlay" id="geoModal" onclick="if(event.target===this)closeGeoModal()">
+    <div class="modal">
+      <button class="close-btn" onclick="closeGeoModal()">Close</button>
+      <h2 id="geoTitle">IP Location</h2>
+      <div id="geoContent"><div class="geo-loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('index')"># <span class="sort-arrow" id="sort-index"></span></th>
+          <th onclick="sortBy('timestamp')">Timestamp <span class="sort-arrow" id="sort-timestamp"></span></th>
+          <th onclick="sortBy('ip')">IP <span class="sort-arrow" id="sort-ip"></span></th>
+          <th onclick="sortBy('country')">Country <span class="sort-arrow" id="sort-country"></span></th>
+          <th onclick="sortBy('browser')">Browser <span class="sort-arrow" id="sort-browser"></span></th>
+          <th onclick="sortBy('os')">OS <span class="sort-arrow" id="sort-os"></span></th>
+          <th onclick="sortBy('device')">Device <span class="sort-arrow" id="sort-device"></span></th>
+          <th onclick="sortBy('referer')">Referer <span class="sort-arrow" id="sort-referer"></span></th>
+          <th onclick="sortBy('language')">Language <span class="sort-arrow" id="sort-language"></span></th>
+          <th onclick="sortBy('path')">Path <span class="sort-arrow" id="sort-path"></span></th>
+        </tr>
+      </thead>
+      <tbody id="visitorTable">
+        <tr><td colspan="10" class="loading">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    var visitors = [];
+    var geoCache = {};
+    var countryCache = {};
+    var currentSort = { field: 'timestamp', dir: 'desc' };
+
+    function setStatus(msg, type) {
+      var bar = document.getElementById('statusBar');
+      bar.innerHTML = '<span class="' + (type || '') + '">' + msg + '</span>';
+    }
+
+    function cleanIP(ip) {
+      return (ip || '').replace(/^::ffff:/, '');
+    }
+
+    function fetchData() {
+      setStatus('Fetching data...');
+      fetch('/api/visitors')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          visitors = data.reverse();
+          setStatus('<span class="success">Loaded ' + visitors.length + ' records</span> — Last refresh: ' + new Date().toLocaleTimeString(), 'success');
+          updateStats();
+          renderTable();
+          resolveCountries();
+        })
+        .catch(function(err) {
+          setStatus('Error loading data: ' + err.message, 'error');
+          document.getElementById('visitorTable').innerHTML = '<tr><td colspan="10" class="loading">Error loading data: ' + err.message + '</td></tr>';
+        });
+    }
+
+    function forceRefresh() {
+      setStatus('Refreshing from S3...');
+      fetch('/api/refresh', { method: 'POST' })
+        .then(function() { fetchData(); })
+        .catch(function() { fetchData(); });
+    }
+
+    function updateStats() {
+      document.getElementById('totalVisitors').textContent = visitors.length;
+      var ips = {};
+      visitors.forEach(function(v) { ips[v.ip] = true; });
+      document.getElementById('uniqueIPs').textContent = Object.keys(ips).length;
+      var mobile = 0, desktop = 0;
+      visitors.forEach(function(v) {
+        if (v.device && v.device.type === 'mobile') mobile++;
+        else desktop++;
+      });
+      document.getElementById('mobileCount').textContent = mobile;
+      document.getElementById('desktopCount').textContent = desktop;
+      var today = new Date().toISOString().slice(0, 10);
+      var todayCount = 0;
+      visitors.forEach(function(v) { if (v.timestamp && v.timestamp.indexOf(today) === 0) todayCount++; });
+      document.getElementById('todayCount').textContent = todayCount;
+    }
+
+    function getCountryDisplay(ip) {
+      if (!ip || ip === '-') return '-';
+      var cached = countryCache[ip];
+      if (!cached) return '...';
+      if (cached.error) return '-';
+      var flag = '';
+      if (cached.countryCode) {
+        try {
+          var chars = cached.countryCode.toUpperCase().split('');
+          flag = String.fromCodePoint(0x1F1E6 - 65 + chars[0].charCodeAt(0)) + String.fromCodePoint(0x1F1E6 - 65 + chars[1].charCodeAt(0));
+        } catch(e) { flag = ''; }
+      }
+      return flag + ' ' + (cached.country || '-') + (cached.city ? ', ' + cached.city : '');
+    }
+
+    function resolveCountries() {
+      var unique = [];
+      var seen = {};
+      visitors.forEach(function(v) {
+        var ip = cleanIP(v.ip);
+        if (ip && ip !== '-' && !countryCache[ip] && !seen[ip]) {
+          seen[ip] = true;
+          unique.push(ip);
+        }
+      });
+      if (unique.length === 0) return;
+      var batches = [];
+      for (var i = 0; i < unique.length; i += 100) {
+        batches.push(unique.slice(i, i + 100));
+      }
+      var completed = 0;
+      batches.forEach(function(batch) {
+        fetch('http://ip-api.com/batch?fields=status,country,countryCode,city,query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(batch.map(function(ip) { return { query: ip }; }))
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(results) {
+          results.forEach(function(r) {
+            if (r.status === 'success') countryCache[r.query] = r;
+            else countryCache[r.query] = { error: true };
+          });
+          completed++;
+          if (completed === batches.length) renderTable();
+        })
+        .catch(function() {
+          batch.forEach(function(ip) { countryCache[ip] = { error: true }; });
+          completed++;
+          if (completed === batches.length) renderTable();
+        });
+      });
+    }
+
+    function getSortValue(v, field) {
+      var ip = cleanIP(v.ip);
+      switch(field) {
+        case 'index': return 0;
+        case 'timestamp': return v.timestamp || '';
+        case 'ip': return ip;
+        case 'country': return getCountryDisplay(ip);
+        case 'browser': return (v.browser && v.browser.name) || '';
+        case 'os': return (v.os && v.os.name) || '';
+        case 'device': return (v.device && v.device.type) || 'desktop';
+        case 'referer': return v.referer || '';
+        case 'language': return v.acceptLanguage || '';
+        case 'path': return v.path || '';
+        default: return '';
+      }
+    }
+
+    function sortBy(field) {
+      if (currentSort.field === field) {
+        currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort.field = field;
+        currentSort.dir = 'asc';
+      }
+      document.querySelectorAll('.sort-arrow').forEach(function(el) {
+        el.textContent = '';
+        el.className = 'sort-arrow';
+      });
+      var arrow = document.getElementById('sort-' + field);
+      if (arrow) {
+        arrow.textContent = currentSort.dir === 'asc' ? ' ▲' : ' ▼';
+        arrow.className = 'sort-arrow active';
+      }
+      renderTable();
+    }
+
+    function renderTable() {
+      var search = document.getElementById('search').value.toLowerCase();
+      var deviceFilter = document.getElementById('deviceFilter').value;
+
+      var filtered = visitors.filter(function(v) {
+        var ip = cleanIP(v.ip);
+        var country = getCountryDisplay(ip).toLowerCase();
+        var matchesSearch = !search ||
+          ip.toLowerCase().indexOf(search) !== -1 ||
+          ((v.browser && v.browser.name) || '').toLowerCase().indexOf(search) !== -1 ||
+          ((v.os && v.os.name) || '').toLowerCase().indexOf(search) !== -1 ||
+          (v.referer || '').toLowerCase().indexOf(search) !== -1 ||
+          (v.userAgent || '').toLowerCase().indexOf(search) !== -1 ||
+          country.indexOf(search) !== -1;
+
+        var deviceType = (v.device && v.device.type) || '';
+        var matchesDevice = !deviceFilter ||
+          (deviceFilter === 'desktop' && !deviceType) ||
+          (deviceFilter === deviceType);
+
+        return matchesSearch && matchesDevice;
+      });
+
+      if (currentSort.field !== 'index') {
+        filtered.sort(function(a, b) {
+          var va = getSortValue(a, currentSort.field).toString().toLowerCase();
+          var vb = getSortValue(b, currentSort.field).toString().toLowerCase();
+          if (va < vb) return currentSort.dir === 'asc' ? -1 : 1;
+          if (va > vb) return currentSort.dir === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+
+      var tbody = document.getElementById('visitorTable');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="loading">No matching visitors</td></tr>';
+        return;
+      }
+
+      var html = '';
+      filtered.forEach(function(v, i) {
+        var ip = cleanIP(v.ip);
+        var deviceType = (v.device && v.device.type) || 'desktop';
+        var badgeClass = deviceType === 'mobile' ? 'badge-mobile' :
+                         deviceType === 'tablet' ? 'badge-tablet' : 'badge-desktop';
+        var browserName = (v.browser && v.browser.name) || '-';
+        var browserVer = (v.browser && v.browser.version) || '';
+        var osName = (v.os && v.os.name) || '-';
+        var osVer = (v.os && v.os.version) || '';
+        var vendor = (v.device && v.device.vendor) || '';
+        var model = (v.device && v.device.model) || '';
+        var lang = v.acceptLanguage ? v.acceptLanguage.split(',')[0] : '-';
+        var ts = v.timestamp ? new Date(v.timestamp).toLocaleString() : '-';
+
+        html += '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + ts + '</td>' +
+          '<td><span class="ip-link" onclick="lookupIP(\'' + ip + '\')">' + (ip || '-') + '</span></td>' +
+          '<td>' + getCountryDisplay(ip) + '</td>' +
+          '<td>' + browserName + ' ' + browserVer + '</td>' +
+          '<td>' + osName + ' ' + osVer + '</td>' +
+          '<td><span class="badge ' + badgeClass + '">' + deviceType + '</span> ' + vendor + ' ' + model + '</td>' +
+          '<td title="' + (v.referer || '') + '">' + (v.referer || '-') + '</td>' +
+          '<td>' + lang + '</td>' +
+          '<td>' + (v.path || '-') + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function lookupIP(ip) {
+      if (!ip || ip === '-') return;
+      var modal = document.getElementById('geoModal');
+      var title = document.getElementById('geoTitle');
+      var content = document.getElementById('geoContent');
+      modal.classList.add('active');
+      title.textContent = 'IP: ' + ip;
+      content.innerHTML = '<div class="geo-loading">Looking up location...</div>';
+
+      if (geoCache[ip]) {
+        renderGeo(geoCache[ip]);
+        return;
+      }
+
+      fetch('http://ip-api.com/json/' + encodeURIComponent(ip) + '?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.status === 'success') {
+            geoCache[ip] = data;
+            renderGeo(data);
+          } else {
+            content.innerHTML = '<div class="geo-loading">Lookup failed: ' + (data.message || 'unknown error') + '</div>';
+          }
+        })
+        .catch(function(err) {
+          content.innerHTML = '<div class="geo-loading">Error: ' + err.message + '</div>';
+        });
+    }
+
+    function renderGeo(d) {
+      var flag = '';
+      if (d.countryCode) {
+        try {
+          var chars = d.countryCode.toUpperCase().split('');
+          flag = String.fromCodePoint(0x1F1E6 - 65 + chars[0].charCodeAt(0)) + String.fromCodePoint(0x1F1E6 - 65 + chars[1].charCodeAt(0));
+        } catch(e) { flag = ''; }
+      }
+      var rows = [
+        ['Country', '<span class="geo-flag">' + flag + '</span> ' + (d.country || '-') + ' (' + (d.countryCode || '') + ')'],
+        ['Region', (d.regionName || '-') + ' (' + (d.region || '') + ')'],
+        ['City', d.city || '-'],
+        ['ZIP Code', d.zip || '-'],
+        ['Coordinates', d.lat + ', ' + d.lon],
+        ['Timezone', d.timezone || '-'],
+        ['ISP', d.isp || '-'],
+        ['Organization', d.org || '-'],
+        ['AS', d.as || '-']
+      ];
+      var html = '';
+      rows.forEach(function(r) {
+        html += '<div class="geo-row"><span class="geo-label">' + r[0] + '</span><span class="geo-value">' + r[1] + '</span></div>';
+      });
+      html += '<div class="geo-map"><iframe src="https://maps.google.com/maps?q=' + d.lat + ',' + d.lon + '&z=10&output=embed"></iframe></div>';
+      document.getElementById('geoContent').innerHTML = html;
+    }
+
+    function closeGeoModal() {
+      document.getElementById('geoModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeGeoModal(); });
+
+    function exportCSV() {
+      var headers = ['Timestamp','IP','Country','Browser','Browser Version','OS','OS Version','Device Type','Device Vendor','Device Model','Referer','Language','Path','User Agent'];
+      var rows = visitors.map(function(v) {
+        var ip = cleanIP(v.ip);
+        return [
+          v.timestamp,
+          ip,
+          getCountryDisplay(ip),
+          (v.browser && v.browser.name) || '',
+          (v.browser && v.browser.version) || '',
+          (v.os && v.os.name) || '',
+          (v.os && v.os.version) || '',
+          (v.device && v.device.type) || 'desktop',
+          (v.device && v.device.vendor) || '',
+          (v.device && v.device.model) || '',
+          v.referer || '',
+          v.acceptLanguage || '',
+          v.path || '',
+          v.userAgent || ''
+        ];
+      });
+      var csv = [headers].concat(rows).map(function(r) {
+        return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+      }).join('\n');
+      var blob = new Blob([csv], { type: 'text/csv' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'trollshunter-visitors-' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+    }
+
+    fetchData();
+    setInterval(fetchData, 30000);
+  </script>
+</body>
+</html>
