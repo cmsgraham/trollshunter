@@ -422,6 +422,9 @@ a:hover { color: var(--accent-hover); }
   font-weight: 400;
 }
 
+/* === Mobile Brand Hero (hidden on desktop) === */
+.mobile-brand-hero { display: none; }
+
 /* === Search Bar === */
 .search-bar-wrapper { padding: 12px 24px; }
 
@@ -1197,6 +1200,43 @@ a:hover { color: var(--accent-hover); }
 @media (max-width: 700px) {
   .sidebar { display: none; }
   .main-column { max-width: 100%; border-right: none; }
+
+  /* --- Mobile Brand Hero --- */
+  .mobile-brand-hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 20px 18px;
+    background:
+      linear-gradient(135deg, rgba(232, 101, 26, 0.08) 0%, transparent 60%),
+      var(--bg-base);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .mobile-brand-logo {
+    width: 44px;
+    height: auto;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 12px rgba(232, 101, 26, 0.3));
+  }
+  .mobile-brand-text h1 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+  .mobile-brand-text p {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+  /* Hide the desktop top bar on mobile */
+  .page-top-bar { display: none; }
 
   .mobile-nav {
     display: flex;

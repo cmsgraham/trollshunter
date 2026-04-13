@@ -51,7 +51,16 @@ export default function TrollList() {
 
   return (
     <>
-      {/* Sticky top bar */}
+      {/* Mobile brand hero — hidden on desktop */}
+      <div className="mobile-brand-hero">
+        <img src="/logos/trolls_hunter_logo_only.png" alt="TrollsHunter" className="mobile-brand-logo" />
+        <div className="mobile-brand-text">
+          <h1>Community Blocklist</h1>
+          <p>{total} accounts reported by the community</p>
+        </div>
+      </div>
+
+      {/* Sticky top bar (desktop) */}
       <div className="page-top-bar">
         <h1>Community Blocklist</h1>
         <p className="subtitle">{total} accounts reported by the community</p>
