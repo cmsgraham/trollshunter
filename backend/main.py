@@ -44,10 +44,10 @@ app.include_router(tracking_router)
 
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     init_db()
     # Start background S3 sync for visitor logs
-    asyncio.get_event_loop().create_task(_sync_loop())
+    asyncio.create_task(_sync_loop())
 
 
 @app.get("/")

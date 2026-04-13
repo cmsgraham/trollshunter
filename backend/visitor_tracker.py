@@ -14,6 +14,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("visitor_tracker")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(name)s - %(message)s"))
+    logger.addHandler(handler)
 
 DATA_DIR = Path("/app/data")
 LOG_FILE = DATA_DIR / "visitors.json"
