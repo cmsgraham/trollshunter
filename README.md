@@ -19,6 +19,13 @@ A community-driven blocklist platform for X (Twitter). Report trolls, bots, and 
 │   (Vite)        │     │  (Python)        │     │  (Twitter)  │
 │   Port 5173     │     │  Port 8000       │     └─────────────┘
 └─────────────────┘     │  SQLite DB       │
+                        │  Visitor Tracker ─┼──▶ Linode Object Storage (S3)
+                        └──────────────────┘           │
+                                                       ▼
+                        ┌──────────────────┐    ┌─────────────┐
+                        │ Analytics Panel  │◀───│ qrengagement│
+                        │ (local Node.js)  │    │   bucket    │
+                        │ Port 4001        │    └─────────────┘
                         └──────────────────┘
 ```
 
@@ -98,11 +105,98 @@ Open http://localhost:5173 in your browser.
 | POST | `/trolls/{id}/votes` | Vote on a troll report |
 | DELETE | `/trolls/{id}/votes` | Remove your vote |
 
-### Blocks
+### Admin
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/blocks` | Block trolls on X (bulk) |
-| GET | `/blocks/my-blocks` | Get your blocked list |
+| GET | `/admin/pending` | List trolls pending approval |
+| GET | `/admin/disputed` | List disputed trolls |
+| GET | `/admin/reports` | List all reports with reporter + troll details |
+| POST | `/admin/{id}/approve` | Approve a troll report |
+| POST | `/admin/{id}/reject` | Reject and delete a report |
+| POST | `/admin/{id}/dismiss` | Dismiss disputes on a troll |
+| POST | `/admin/{id}/remove` | Remove a troll (disputes upheld) |
+
+### Tracking
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/track` | Record a page visit (called by frontend on navigation) |
+
+## Visitor Analytics
+
+TrollShunter includes built-in visitor tracking that logs page visits on the production site and syncs the data to Linode Object Storage (S3-compatible). A local admin panel lets you view all analytics without exposing any data publicly.
+
+### How It Works
+
+1. **Frontend beacon** — On every route change, the React app sends a `POST /api/track` request with the current path and referer
+2. **Backend logging** — `visitor_tracker.py` parses the user-agent (browser, OS, device), captures the client IP from proxy headers, and appends the visit to `/app/data/visitors.json`
+3. **S3 sync** — A background async task uploads the visitor log to Linode Object Storage every 5 minutes, with timestamped backups
+4. **Local admin panel** — A Node.js Express app reads from S3 and serves a dashboard at `http://127.0.0.1:4001` (local only)
+
+### Data Collected Per Visit
+
+| Field | Example |
+|-------|---------|
+| Timestamp | `2026-04-13T16:54:12.243Z` |
+| IP Address | `143.255.29.93` |
+| Path | `/`, `/report`, `/admin` |
+| Browser | Chrome 124.0 |
+| OS | macOS 14.4 |
+| Device type | mobile / desktop / tablet |
+| Referer | `https://x.com/...` |
+| Language | `en-US` |
+| DNT header | `1` |
+
+### S3 Storage Layout
+
+```
+qrengagement/
+  trollshunter-visitors/
+    visitors.json              ← current snapshot (overwritten each sync)
+    backups/
+      visitors-2026-04-13T16-54-12.json   ← timestamped backups
+      visitors-2026-04-13T17-00-00.json
+      ...
+```
+
+### Running the Analytics Dashboard
+
+```bash
+# From the project root:
+./analytics.sh
+
+# Or manually:
+cd analytics
+npm install   # first time only
+node admin.js
+```
+
+Opens at **http://127.0.0.1:4001** (local only, never exposed to the internet).
+
+**Dashboard features:**
+- Total visits, unique IPs, mobile/desktop breakdown, today's count
+- Sortable table with all visit details
+- Search/filter by IP, browser, OS, country, referer
+- Click any IP to see full geolocation (country, city, ISP, map)
+- CSV export
+- Auto-refreshes from S3 every 15 seconds
+
+### Analytics Configuration
+
+The analytics panel needs Linode Object Storage credentials in `analytics/.env`:
+
+```
+LINODE_ACCESS_KEY=your_access_key
+LINODE_SECRET_KEY=your_secret_key
+LINODE_BUCKET=qrengagement
+```
+
+The backend needs the same credentials in its `.env.production` (already configured on the server):
+
+```
+LINODE_ACCESS_KEY=your_access_key
+LINODE_SECRET_KEY=your_secret_key
+LINODE_BUCKET=qrengagement
+```
 
 ## How It Works
 
@@ -114,11 +208,20 @@ Open http://localhost:5173 in your browser.
 
 ## Deployment
 
-For production deployment:
+For production deployment see [DEPLOY_GUIDE.txt](DEPLOY_GUIDE.txt).
 
-1. Use PostgreSQL instead of SQLite
-2. Set up proper HTTPS with a reverse proxy (nginx)
-3. Use environment variables or a secrets manager
-4. Upgrade to X API Basic tier ($100/month) for better rate limits
-5. Add rate limiting to your own API endpoints
-6. Consider adding email notifications and moderation tools
+The site runs on Docker Compose with 4 containers:
+- **backend** — FastAPI + visitor tracker + S3 sync
+- **frontend** — React (nginx-served static build)
+- **nginx** — Reverse proxy with Let's Encrypt SSL
+- **certbot** — Auto-renewing TLS certificates
+
+### Deploy workflow
+
+```bash
+# 1. Commit and push
+git add -A && git commit -m "your message" && git push origin main
+
+# 2. SSH to server and rebuild
+ssh trollshunter "cd /opt/trollhunter && sudo git pull origin main && sudo docker compose build --no-cache && sudo docker compose up -d"
+```
