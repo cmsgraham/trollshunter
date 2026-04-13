@@ -1,13 +1,13 @@
 """Troll list management routes."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, joinedload, subqueryload
+from sqlalchemy.orm import Session
 from sqlalchemy import func
 import httpx
 
 from database import get_db
 from models import Troll, TrollReport, User
-from schemas import TrollCreate, TrollOut, TrollListOut, ReportOut, VALID_CATEGORIES
+from schemas import TrollCreate, TrollOut, TrollListOut, VALID_CATEGORIES
 from routers.deps import get_current_user
 from profile_scraper import fetch_x_profile
 
@@ -17,18 +17,6 @@ router = APIRouter(prefix="/trolls", tags=["trolls"])
 def troll_to_out(troll: Troll) -> TrollOut:
     """Convert a Troll model to TrollOut with profile/block URLs."""
     obj = troll.__dict__.copy()
-    obj["reports"] = [
-        ReportOut(
-            id=r.id,
-            reporter_username=r.reporter.x_username or r.reporter.username if r.reporter else None,
-            reporter_display_name=r.reporter.x_display_name or r.reporter.display_name if r.reporter else None,
-            reporter_profile_image_url=r.reporter.x_profile_image_url if r.reporter else None,
-            reason=r.reason,
-            evidence_url=r.evidence_url,
-            created_at=r.created_at,
-        )
-        for r in (troll.reports if troll.reports else [])
-    ]
     data = TrollOut.model_validate(obj)
     data.profile_url = f"https://x.com/{troll.x_username}"
     data.block_url = f"https://x.com/intent/user?screen_name={troll.x_username}"
@@ -46,7 +34,7 @@ async def list_trolls(
     db: Session = Depends(get_db),
 ):
     """List approved trolls/bots with pagination, filtering, and sorting."""
-    query = db.query(Troll).options(subqueryload(Troll.reports).joinedload(TrollReport.reporter)).filter(Troll.is_approved == True)
+    query = db.query(Troll).filter(Troll.is_approved == True)
 
     if category and category in VALID_CATEGORIES:
         query = query.filter(Troll.category == category)
@@ -102,7 +90,7 @@ async def get_stats(db: Session = Depends(get_db)):
 @router.get("/{troll_id}", response_model=TrollOut)
 async def get_troll(troll_id: int, db: Session = Depends(get_db)):
     """Get a specific troll's details."""
-    troll = db.query(Troll).options(joinedload(Troll.reports).joinedload(TrollReport.reporter)).filter(Troll.id == troll_id).first()
+    troll = db.query(Troll).filter(Troll.id == troll_id).first()
     if not troll:
         raise HTTPException(status_code=404, detail="Troll not found")
     return troll_to_out(troll)

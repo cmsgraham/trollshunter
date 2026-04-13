@@ -103,14 +103,24 @@ class TrollOut(BaseModel):
     created_at: datetime
     profile_url: str = ""
     block_url: str = ""
-    reports: list['ReportOut'] = []
 
     class Config:
         from_attributes = True
 
 
+class TrollAdminOut(TrollOut):
+    reports: list['ReportOut'] = []
+
+
 class TrollListOut(BaseModel):
     trolls: list[TrollOut]
+    total: int
+    page: int
+    per_page: int
+
+
+class TrollAdminListOut(BaseModel):
+    trolls: list[TrollAdminOut]
     total: int
     page: int
     per_page: int

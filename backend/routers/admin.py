@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from database import get_db
 from models import Troll, TrollReport, User
-from schemas import TrollOut, TrollListOut, ReportOut
+from schemas import TrollOut, TrollListOut, TrollAdminOut, TrollAdminListOut, ReportOut
 from routers.deps import get_current_user
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -18,7 +18,7 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
-def troll_to_out(troll: Troll) -> TrollOut:
+def troll_to_out(troll: Troll) -> TrollAdminOut:
     obj = troll.__dict__.copy()
     obj["reports"] = [
         ReportOut(
@@ -32,13 +32,13 @@ def troll_to_out(troll: Troll) -> TrollOut:
         )
         for r in (troll.reports if troll.reports else [])
     ]
-    data = TrollOut.model_validate(obj)
+    data = TrollAdminOut.model_validate(obj)
     data.profile_url = f"https://x.com/{troll.x_username}"
     data.block_url = f"https://x.com/intent/user?screen_name={troll.x_username}"
     return data
 
 
-@router.get("/pending", response_model=TrollListOut)
+@router.get("/pending", response_model=TrollAdminListOut)
 async def list_pending(
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=20, ge=1, le=100),
@@ -49,7 +49,7 @@ async def list_pending(
     query = db.query(Troll).options(subqueryload(Troll.reports).joinedload(TrollReport.reporter)).filter(Troll.is_approved == False)
     total = query.count()
     trolls = query.order_by(Troll.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
-    return TrollListOut(
+    return TrollAdminListOut(
         trolls=[troll_to_out(t) for t in trolls],
         total=total,
         page=page,
@@ -87,7 +87,7 @@ async def reject_troll(
     return {"success": True, "message": f"@{troll.x_username} rejected and removed"}
 
 
-@router.get("/disputed", response_model=TrollListOut)
+@router.get("/disputed", response_model=TrollAdminListOut)
 async def list_disputed(
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=20, ge=1, le=100),
@@ -98,7 +98,7 @@ async def list_disputed(
     query = db.query(Troll).options(subqueryload(Troll.reports).joinedload(TrollReport.reporter)).filter(Troll.is_approved == True, Troll.downvotes > 0)
     total = query.count()
     trolls = query.order_by(Troll.downvotes.desc()).offset((page - 1) * per_page).limit(per_page).all()
-    return TrollListOut(
+    return TrollAdminListOut(
         trolls=[troll_to_out(t) for t in trolls],
         total=total,
         page=page,

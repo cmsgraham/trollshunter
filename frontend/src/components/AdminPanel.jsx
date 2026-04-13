@@ -250,6 +250,33 @@ export default function AdminPanel() {
                     {troll.country && <span className="country-badge">{troll.country}</span>}
                   </div>
                   {troll.bio && <p className="admin-bio">{troll.bio}</p>}
+                  {/* Reporter info */}
+                  {troll.reports && troll.reports.length > 0 && (
+                    <div className="admin-reporters">
+                      {troll.reports.map((report) => (
+                        <div key={report.id} className="admin-reporter-item">
+                          <div className="admin-reporter-avatar">
+                            {report.reporter_profile_image_url ? (
+                              <img src={proxyImg(report.reporter_profile_image_url)} alt="" />
+                            ) : (
+                              <span>{(report.reporter_username || '?')[0].toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className="admin-reporter-info">
+                            <span className="admin-reporter-name">
+                              {report.reporter_display_name || report.reporter_username || 'Anonymous'}
+                            </span>
+                            {report.reason && <span className="admin-reporter-reason">{report.reason}</span>}
+                            {report.evidence_url && (
+                              <a href={report.evidence_url} target="_blank" rel="noopener noreferrer" className="admin-reporter-evidence">
+                                View evidence ↗
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="admin-meta">
                     <span className="disputes-count">{troll.downvotes} dispute{troll.downvotes !== 1 ? 's' : ''}</span>
                     <span>·</span>

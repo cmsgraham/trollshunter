@@ -8,3 +8,5 @@ trollhunter.db
 .env
 .env.production
 *.log
+trollshunter-secrets.tar.gz
+*.tar.gz
