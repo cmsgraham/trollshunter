@@ -56,8 +56,9 @@ export default function AuthPage() {
 
   return (
     <div className="auth-page">
+      <img src="/logos/trolls_hunter_logo_only.png" alt="TrollsHunter" className="auth-logo" />
       <div className="auth-card">
-        <h1>Welcome to TrollHunter</h1>
+        <h1>Welcome to TrollsHunter</h1>
         <p className="subtitle">Login to report and vote on trolls.</p>
 
         {(error || urlError) && (

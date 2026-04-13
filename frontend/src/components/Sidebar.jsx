@@ -7,8 +7,9 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
-        <Link to="/" className="sidebar-logo" title="TrollHunter">
-          🛡️
+        <Link to="/" className="sidebar-logo" title="TrollsHunter">
+          <img src="/logos/trolls_hunter_letters.png" alt="TrollsHunter" className="sidebar-logo-full" style={{ height: 28 }} />
+          <img src="/logos/trolls_hunter_logo_only.png" alt="TrollsHunter" className="sidebar-logo-icon" style={{ height: 32, display: 'none' }} />
         </Link>
 
         <nav className="sidebar-nav">

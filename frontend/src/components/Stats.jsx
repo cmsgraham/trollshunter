@@ -45,7 +45,7 @@ export default function Stats() {
         {Object.entries(stats.by_category).map(([cat, count]) => (
           <div key={cat} className="category-stat">
             <span className="category-badge" style={{
-              backgroundColor: { troll: '#f4212e', bot: '#1d9bf0', spam: '#ff7a00', hate: '#7856ff', politics: '#00ba7c', sports: '#f91880', entertainment: '#ffd400', news: '#8ecdf7', scam: '#ff6347', other: '#71767b' }[cat]
+              backgroundColor: { troll: '#e5383b', bot: '#4a9eff', spam: '#e8651a', hate: '#9b5de5', politics: '#2dc672', sports: '#f15bb5', entertainment: '#fee440', news: '#72b4f5', scam: '#ff6b6b', other: '#6b7280' }[cat]
             }}>{cat}</span>
             <span className="category-count">{count}</span>
           </div>
