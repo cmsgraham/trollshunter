@@ -95,6 +95,7 @@ class TrollOut(BaseModel):
     bio: Optional[str] = None
     category: str
     country: Optional[str] = None
+    followers_count: Optional[int] = None
     total_reports: int
     upvotes: int
     downvotes: int

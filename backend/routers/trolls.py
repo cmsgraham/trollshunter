@@ -134,6 +134,7 @@ async def report_troll(
             x_profile_image_url=profile.get("profile_image_url"),
             x_banner_url=profile.get("banner_url"),
             bio=profile.get("bio"),
+            followers_count=profile.get("followers_count"),
             category=data.category,
             country=data.country.upper() if data.country else None,
             is_approved=False,

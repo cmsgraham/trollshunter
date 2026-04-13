@@ -16,6 +16,7 @@ async def fetch_x_profile(username: str) -> dict:
         "profile_image_url": None,
         "banner_url": None,
         "bio": None,
+        "followers_count": None,
     }
 
     try:
@@ -57,6 +58,11 @@ async def fetch_x_profile(username: str) -> dict:
                 bio_match = re.search(r'"description"\s*:\s*"([^"]*)"', text)
                 if bio_match and bio_match.group(1):
                     result["bio"] = bio_match.group(1)
+
+                # Followers count
+                followers_match = re.search(r'"followers_count"\s*:\s*(\d+)', text)
+                if followers_match:
+                    result["followers_count"] = int(followers_match.group(1))
 
 
 

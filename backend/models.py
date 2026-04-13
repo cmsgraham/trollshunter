@@ -43,6 +43,7 @@ class Troll(Base):
     bio = Column(Text, nullable=True)
     category = Column(String(50), nullable=False, default="troll")
     country = Column(String(2), nullable=True, index=True)  # ISO 3166-1 alpha-2
+    followers_count = Column(Integer, nullable=True)
     total_reports = Column(Integer, default=1)
     upvotes = Column(Integer, default=0)
     downvotes = Column(Integer, default=0)

@@ -81,6 +81,7 @@ export default function TrollCard({ troll, onRefresh }) {
 
       {/* Metrics (like tweet counters) */}
       <div className="card-metrics">
+        {troll.followers_count != null && <span className="card-metric"><strong>{troll.followers_count.toLocaleString()}</strong> followers</span>}
         <span className="card-metric"><strong>{troll.total_reports}</strong> reports</span>
         <span className="card-metric"><strong>{troll.upvotes}</strong> confirms</span>
         <span className="card-metric"><strong>{troll.downvotes}</strong> disputes</span>
