@@ -8,7 +8,7 @@ import { motion, useScroll, useTransform } from 'framer-motion'
  * As the user scrolls, the overlay fades/scales out over 300px of scroll,
  * revealing the feed content underneath. Simple, performant, no nested scroll.
  */
-export default function CinematicBars({ children }) {
+export default function CinematicBars({ children, onDismiss }) {
   const [dismissed, setDismissed] = useState(false)
   const scrollContainer = useRef(null)
 
@@ -30,17 +30,16 @@ export default function CinematicBars({ children }) {
 
 
 
-  // Once fully scrolled past, permanently remove from DOM and snap to top
+  // Once fully scrolled past, permanently dismiss
   useEffect(() => {
     return scrollY.on('change', (v) => {
       if (v > fadeRange && !dismissed) {
         setDismissed(true)
         sessionStorage.setItem('introSeen', '1')
-        // Snap scroll to top so feed starts cleanly without a jump
-        requestAnimationFrame(() => window.scrollTo(0, 0))
+        if (onDismiss) onDismiss()
       }
     })
-  }, [scrollY, fadeRange, dismissed])
+  }, [scrollY, fadeRange, dismissed, onDismiss])
 
   if (dismissed) {
     return <>{children}</>

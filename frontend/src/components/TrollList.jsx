@@ -65,14 +65,9 @@ export default function TrollList() {
 
   const [introSeen, setIntroSeen] = useState(() => !!sessionStorage.getItem('introSeen'))
 
-  // Listen for sessionStorage changes (set by CinematicBars on dismiss)
-  useEffect(() => {
-    const check = () => {
-      if (sessionStorage.getItem('introSeen')) setIntroSeen(true)
-    }
-    window.addEventListener('storage', check)
-    const interval = setInterval(check, 300)
-    return () => { window.removeEventListener('storage', check); clearInterval(interval) }
+  const handleIntroDismiss = useCallback(() => {
+    setIntroSeen(true)
+    requestAnimationFrame(() => window.scrollTo(0, 0))
   }, [])
 
   const totalPages = Math.ceil(total / 20)
@@ -99,7 +94,7 @@ export default function TrollList() {
 
       {/* Mobile cinematic bars — only on first visit this session */}
       {!introSeen ? (
-        <CinematicBars>
+        <CinematicBars onDismiss={handleIntroDismiss}>
           <div className="bars-feed-inner">
           {/* Sticky search + filters on mobile */}
           <div className="mobile-sticky-controls">
