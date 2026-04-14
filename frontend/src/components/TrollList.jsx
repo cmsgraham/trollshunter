@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { fetchTrolls, detectCountry } from '../api/client'
 import { useAuth } from '../App'
 import TrollCard from './TrollCard'
+import CinematicBars from './CinematicBars'
 import COUNTRIES from '../data/countries'
 
 const categories = ['', 'troll', 'bot', 'spam', 'hate', 'politics', 'sports', 'entertainment', 'news', 'scam', 'other']
@@ -51,23 +52,50 @@ export default function TrollList() {
 
   return (
     <>
-      {/* Mobile brand hero — hidden on desktop */}
-      <div className="mobile-brand-hero">
-        <img src="/logos/trolls_hunter_logo_only.png" alt="TrollsHunter" className="mobile-brand-logo" />
-        <div className="mobile-brand-text">
-          <h1>Community Blocklist</h1>
-          <p>{total} accounts reported by the community</p>
+      {/* Mobile cinematic bars intro — hidden on desktop */}
+      <CinematicBars total={total}>
+        <div className="bars-feed-inner">
+          {/* Search inside cinematic on mobile */}
+          <div className="search-bar-wrapper">
+            <form onSubmit={handleSearch} className="search-bar">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.824 5.262l4.781 4.781-1.414 1.414-4.781-4.781c-1.447 1.142-3.276 1.824-5.262 1.824-4.694 0-8.5-3.806-8.5-8.5z"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Search accounts"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+            </form>
+          </div>
+          <div className="filter-tabs">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                className={`filter-tab${category === cat ? ' active' : ''}`}
+                onClick={() => { setCategory(cat); setPage(1) }}
+              >
+                {categoryLabels[cat]}
+              </button>
+            ))}
+          </div>
+          <div className="troll-feed">
+            {trolls.map(troll => (
+              <TrollCard key={troll.id} troll={troll} onRefresh={loadTrolls} />
+            ))}
+          </div>
         </div>
-      </div>
+      </CinematicBars>
 
-      {/* Sticky top bar (desktop) */}
+      {/* Sticky top bar (desktop only) */}
       <div className="page-top-bar">
         <h1>Community Blocklist</h1>
         <p className="subtitle">{total} accounts reported by the community</p>
       </div>
 
-      {/* Search */}
-      <div className="search-bar-wrapper">
+      {/* Desktop search */}
+      <div className="search-bar-wrapper desktop-only">
         <form onSubmit={handleSearch} className="search-bar">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.824 5.262l4.781 4.781-1.414 1.414-4.781-4.781c-1.447 1.142-3.276 1.824-5.262 1.824-4.694 0-8.5-3.806-8.5-8.5z"/>
@@ -81,8 +109,8 @@ export default function TrollList() {
         </form>
       </div>
 
-      {/* Category tabs */}
-      <div className="filter-tabs">
+      {/* Desktop category tabs */}
+      <div className="filter-tabs desktop-only">
         {categories.map(cat => (
           <button
             key={cat}
@@ -94,7 +122,7 @@ export default function TrollList() {
         ))}
       </div>
 
-      {/* Sort + Country filter */}
+      {/* Sort + Country filter (both) */}
       <div className="sort-wrapper">
         <div className="sort-group">
           <span className="sort-label">Country</span>
@@ -125,8 +153,8 @@ export default function TrollList() {
 
       {error && <div className="error-message">{error}</div>}
 
-      {/* Feed */}
-      <div className="troll-feed">
+      {/* Desktop feed */}
+      <div className="troll-feed desktop-only">
         {trolls.map(troll => (
           <TrollCard key={troll.id} troll={troll} onRefresh={loadTrolls} />
         ))}
