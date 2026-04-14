@@ -310,7 +310,7 @@ export function createGame(canvas, onStateChange) {
             // Score milestone extra life
             if (score >= nextLifeAt && lives < C.MAX_LIVES) {
               lives++
-              nextLifeAt += C.LIFE_SCORE_INTERVAL
+              nextLifeAt += C.LIFE_SCORE_INTERVAL + nextLifeAt * 0.5
               addPop(player.x, player.y - 24, '+1 LIFE!', '#ff5555', 10)
               audio.streak()
             }
@@ -410,7 +410,7 @@ export function createGame(canvas, onStateChange) {
           score += nukeScore
           if (score >= nextLifeAt && lives < C.MAX_LIVES) {
             lives++
-            nextLifeAt += C.LIFE_SCORE_INTERVAL
+            nextLifeAt += C.LIFE_SCORE_INTERVAL + nextLifeAt * 0.5
           }
           enemies.length = 0
           eBullets.length = 0

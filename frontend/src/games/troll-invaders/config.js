@@ -8,7 +8,7 @@ export const C = {
   BULLET_SPEED: 400,
   LIVES: 3,
   MAX_LIVES: 4,
-  LIFE_SCORE_INTERVAL: 500,
+  LIFE_SCORE_INTERVAL: 2000,
 
   ENEMY_BULLET_SPEED: 150,
   ENEMY_SHOOT_CHANCE: 0.003, // per enemy per frame
