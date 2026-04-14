@@ -44,6 +44,8 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./mail/autoconfig.xml:/etc/nginx/mail/autoconfig.xml:ro
+      - ./mail/autodiscover.xml:/etc/nginx/mail/autodiscover.xml:ro
       - certbot-etc:/etc/letsencrypt:ro
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/certbot
