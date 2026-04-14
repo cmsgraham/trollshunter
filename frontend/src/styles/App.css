@@ -1222,20 +1222,21 @@ a:hover { color: var(--accent-hover); }
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: 10vh;
     background:
-      radial-gradient(ellipse at 50% 30%, rgba(232, 101, 26, 0.06) 0%, transparent 60%),
-      var(--bg-root);
+      radial-gradient(ellipse at 50% 20%, rgba(232, 101, 26, 0.06) 0%, transparent 60%),
+      linear-gradient(to bottom, var(--bg-root) 0%, var(--bg-root) 55%, transparent 100%);
     will-change: opacity;
   }
 
   .bars-glow {
     position: absolute;
-    top: 10%;
+    top: 5%;
     left: 50%;
     transform: translateX(-50%);
-    width: 280px;
-    height: 280px;
+    width: 250px;
+    height: 250px;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(232, 101, 26, 0.22) 0%, rgba(232, 101, 26, 0.06) 50%, transparent 70%);
     pointer-events: none;
@@ -1249,8 +1250,8 @@ a:hover { color: var(--accent-hover); }
   }
 
   .bars-shield-img {
-    width: 88vw;
-    max-width: 380px;
+    width: 70vw;
+    max-width: 300px;
     height: auto;
     filter:
       drop-shadow(0 0 30px rgba(232, 101, 26, 0.20))
@@ -1291,7 +1292,7 @@ a:hover { color: var(--accent-hover); }
   /* Content behind bars needs initial top margin so it starts below fold */
   .bars-feed-inner {
     display: block;
-    padding-top: 70vh;
+    padding-top: 52vh;
   }
 
   .mobile-nav {
