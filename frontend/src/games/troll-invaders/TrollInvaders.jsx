@@ -13,7 +13,6 @@ export default function TrollInvaders() {
     const game = createGame(canvas)
     gameRef.current = game
     game.start()
-    // Hide mobile nav during gameplay
     document.body.classList.add('ti-playing')
     return () => {
       game.destroy()
@@ -24,6 +23,21 @@ export default function TrollInvaders() {
   const handleMute = useCallback(() => {
     if (gameRef.current) gameRef.current.toggleMute()
   }, [])
+
+  // Dpad touch handlers
+  const dpad = useCallback((dir, fire) => {
+    if (gameRef.current) gameRef.current.setDpad(dir, fire)
+  }, [])
+
+  const onPadStart = useCallback((dir) => (e) => {
+    e.preventDefault()
+    dpad(dir, true)
+  }, [dpad])
+
+  const onPadEnd = useCallback((e) => {
+    e.preventDefault()
+    dpad(0, false)
+  }, [dpad])
 
   return (
     <div className="ti-wrapper">
@@ -41,6 +55,32 @@ export default function TrollInvaders() {
       </div>
       <div className="ti-canvas-wrap">
         <canvas ref={canvasRef} className="ti-canvas" />
+      </div>
+      <div className="ti-dpad">
+        <div
+          className="ti-dpad-zone ti-dpad-left"
+          onTouchStart={onPadStart(-1)}
+          onTouchEnd={onPadEnd}
+          onTouchCancel={onPadEnd}
+        >
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+        </div>
+        <div
+          className="ti-dpad-zone ti-dpad-fire"
+          onTouchStart={(e) => { e.preventDefault(); dpad(0, true) }}
+          onTouchEnd={onPadEnd}
+          onTouchCancel={onPadEnd}
+        >
+          <span className="ti-dpad-fire-label">FIRE</span>
+        </div>
+        <div
+          className="ti-dpad-zone ti-dpad-right"
+          onTouchStart={onPadStart(1)}
+          onTouchEnd={onPadEnd}
+          onTouchCancel={onPadEnd}
+        >
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+        </div>
       </div>
       <div className="ti-controls-hint">
         <span>← → Move</span>
