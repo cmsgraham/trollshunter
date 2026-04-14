@@ -11,9 +11,11 @@ export const C = {
   ENEMY_BULLET_SPEED: 150,
   ENEMY_SHOOT_CHANCE: 0.003, // per enemy per frame
 
-  POWERUP_DROP_CHANCE: 0.10,
+  POWERUP_DROP_CHANCE: 0.12,
   POWERUP_SPEED: 65,
+  POWERUP_FAST_SPEED: 95,
   POWERUP_DURATION: 8,
+  SHIELD_DURATION: 5,
 
   STREAK: [
     { n: 3, label: 'CLEANUP', color: '#44ff44' },

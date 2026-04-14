@@ -36,10 +36,11 @@ export function createGame(canvas, onStateChange) {
   let particles = []
   let pops = [] // text popups
   let streakPop = null
-  let weapon = 'normal' // 'normal' | 'dual' | 'triple'
+  let weapon = 'normal' // 'normal' | 'dual' | 'triple' | 'quad' | 'penta'
   let weaponTimer = 0
   let powerups = []
   let gameOverTimer = 0
+  let shieldTimer = 0
 
   // Stars
   const stars = Array.from({ length: 80 }, () => ({
@@ -143,6 +144,7 @@ export function createGame(canvas, onStateChange) {
     weaponTimer = 0
     powerups = []
     gameOverTimer = 0
+    shieldTimer = 0
     state = 'WAVE_CLEAR'
     waveTimer = 1.2
     spawnWave()
@@ -205,7 +207,18 @@ export function createGame(canvas, onStateChange) {
     fireTimer -= dt
     const wantShoot = keys.Space || touching
     if (wantShoot && fireTimer <= 0 && bullets.length < C.MAX_BULLETS) {
-      if (weapon === 'triple') {
+      if (weapon === 'penta') {
+        bullets.push({ x: player.x, y: player.y - 6, w: 3, h: 5, vx: 0 })
+        bullets.push({ x: player.x - 6, y: player.y - 5, w: 3, h: 5, vx: -25 })
+        bullets.push({ x: player.x + 6, y: player.y - 5, w: 3, h: 5, vx: 25 })
+        bullets.push({ x: player.x - 12, y: player.y - 3, w: 3, h: 5, vx: -55 })
+        bullets.push({ x: player.x + 12, y: player.y - 3, w: 3, h: 5, vx: 55 })
+      } else if (weapon === 'quad') {
+        bullets.push({ x: player.x - 5, y: player.y - 6, w: 3, h: 5, vx: 0 })
+        bullets.push({ x: player.x + 5, y: player.y - 6, w: 3, h: 5, vx: 0 })
+        bullets.push({ x: player.x - 10, y: player.y - 4, w: 3, h: 5, vx: -40 })
+        bullets.push({ x: player.x + 10, y: player.y - 4, w: 3, h: 5, vx: 40 })
+      } else if (weapon === 'triple') {
         bullets.push({ x: player.x, y: player.y - 6, w: 3, h: 5, vx: 0 })
         bullets.push({ x: player.x - 8, y: player.y - 4, w: 3, h: 5, vx: -35 })
         bullets.push({ x: player.x + 8, y: player.y - 4, w: 3, h: 5, vx: 35 })
@@ -299,8 +312,15 @@ export function createGame(canvas, onStateChange) {
 
             // Power-up drop
             if (Math.random() < C.POWERUP_DROP_CHANCE) {
+              const roll = Math.random()
+              let ptype
+              if (roll < 0.05) ptype = 'shield'
+              else if (roll < 0.12) ptype = 'penta'
+              else if (roll < 0.22) ptype = 'quad'
+              else if (roll < 0.45) ptype = 'triple'
+              else ptype = 'dual'
               powerups.push({
-                type: Math.random() < 0.65 ? 'dual' : 'triple',
+                type: ptype,
                 x: e.x, y: e.y,
               })
             }
@@ -326,24 +346,33 @@ export function createGame(canvas, onStateChange) {
     }
 
     // Update & collect power-ups
-    const WLEVELS = { normal: 0, dual: 1, triple: 2 }
+    const WLEVELS = { normal: 0, dual: 1, triple: 2, quad: 3, penta: 4 }
+    const PFAST = { quad: true, penta: true, shield: true }
     for (let i = powerups.length - 1; i >= 0; i--) {
       const p = powerups[i]
-      p.y += C.POWERUP_SPEED * dt
+      p.y += (PFAST[p.type] ? C.POWERUP_FAST_SPEED : C.POWERUP_SPEED) * dt
       if (p.y > C.H + 10) { powerups.splice(i, 1); continue }
       if (Math.abs(p.x - player.x) < 14 && Math.abs(p.y - player.y) < 14) {
-        if (WLEVELS[p.type] >= WLEVELS[weapon]) weapon = p.type
-        weaponTimer = C.POWERUP_DURATION
+        if (p.type === 'shield') {
+          shieldTimer = C.SHIELD_DURATION
+          addPop(player.x, player.y - 16, 'SHIELD!', '#44ff44', 10)
+        } else {
+          if (WLEVELS[p.type] >= WLEVELS[weapon]) weapon = p.type
+          weaponTimer = C.POWERUP_DURATION
+          const labels = { dual: 'DUAL!', triple: 'TRIPLE!', quad: 'QUAD!', penta: 'PENTA!' }
+          const colors = { dual: '#ffcc00', triple: '#ff44ff', quad: '#44ddff', penta: '#ff6600' }
+          addPop(player.x, player.y - 16, labels[weapon], colors[weapon], 10)
+        }
         powerups.splice(i, 1)
         audio.streak()
-        addPop(player.x, player.y - 16, weapon === 'triple' ? 'TRIPLE!' : 'DUAL!', weapon === 'triple' ? '#ff44ff' : '#ffcc00', 10)
         shakeAmt = 3
       }
     }
 
     // Collision: enemy bullets → player
     invulnTimer -= dt
-    if (invulnTimer <= 0) {
+    if (shieldTimer > 0) shieldTimer -= dt
+    if (invulnTimer <= 0 && shieldTimer <= 0) {
       for (let i = eBullets.length - 1; i >= 0; i--) {
         const b = eBullets[i]
         if (Math.abs(b.x - player.x) < 7 && Math.abs(b.y - player.y) < 7) {
@@ -356,7 +385,7 @@ export function createGame(canvas, onStateChange) {
 
     // Collision: enemies reaching player
     for (const e of enemies) {
-      if (e.y + e.h / 2 > player.y - 8) {
+      if (e.y + e.h / 2 > player.y - 8 && shieldTimer <= 0) {
         hitPlayer()
         break
       }
@@ -469,26 +498,47 @@ export function createGame(canvas, onStateChange) {
     for (const b of eBullets) drawSprite(spr.enemyBullet, b.x, b.y, 1.5)
 
     // Power-ups
+    const PSPRITE_MAP = { dual: 'powerupDual', triple: 'powerupTriple', quad: 'powerupQuad', penta: 'powerupPenta', shield: 'powerupShield' }
+    const PCOL_MAP = { dual: '#ffcc00', triple: '#ff44ff', quad: '#44ddff', penta: '#ff6600', shield: '#44ff44' }
     for (const p of powerups) {
       const bob = Math.sin(Date.now() / 200) * 2
-      const col = p.type === 'triple' ? '#ff44ff' : '#ffcc00'
+      const col = PCOL_MAP[p.type] || '#fff'
       ctx.globalAlpha = 0.25
       ctx.fillStyle = col
       ctx.beginPath()
       ctx.arc(p.x, p.y + bob, 9, 0, Math.PI * 2)
       ctx.fill()
       ctx.globalAlpha = 1
-      drawSprite(spr['powerup' + (p.type === 'triple' ? 'Triple' : 'Dual')], p.x, p.y + bob, 2)
+      drawSprite(spr[PSPRITE_MAP[p.type]], p.x, p.y + bob, 2)
+    }
+
+    // Shield bubble around player
+    if (shieldTimer > 0 && (state === 'PLAYING' || state === 'WAVE_CLEAR')) {
+      const pulse = 1 + Math.sin(Date.now() / 100) * 0.08
+      const r = 16 * pulse
+      ctx.save()
+      ctx.globalAlpha = Math.min(0.35, shieldTimer * 0.3)
+      ctx.strokeStyle = '#44ff44'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(player.x, player.y, r, 0, Math.PI * 2)
+      ctx.stroke()
+      ctx.globalAlpha = Math.min(0.12, shieldTimer * 0.1)
+      ctx.fillStyle = '#44ff44'
+      ctx.fill()
+      ctx.restore()
     }
 
     // Weapon indicator near player
     if (weapon !== 'normal' && (state === 'PLAYING' || state === 'WAVE_CLEAR')) {
-      const col = weapon === 'triple' ? '#ff44ff' : '#ffcc00'
+      const wcols = { dual: '#ffcc00', triple: '#ff44ff', quad: '#44ddff', penta: '#ff6600' }
+      const wlabels = { dual: 'DUAL', triple: 'TRIPLE', quad: 'QUAD', penta: 'PENTA' }
+      const col = wcols[weapon]
       ctx.font = 'bold 7px monospace'
       ctx.textAlign = 'center'
       ctx.globalAlpha = 0.7
       ctx.fillStyle = col
-      ctx.fillText(weapon === 'triple' ? 'TRIPLE' : 'DUAL', player.x, player.y + 16)
+      ctx.fillText(wlabels[weapon], player.x, player.y + 16)
       const barW = 28
       const filled = (weaponTimer / C.POWERUP_DURATION) * barW
       ctx.fillStyle = 'rgba(255,255,255,0.15)'
