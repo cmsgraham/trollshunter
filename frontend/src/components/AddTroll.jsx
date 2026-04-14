@@ -28,6 +28,19 @@ export default function AddTroll() {
     )
   }
 
+  const parseUsername = (val) => {
+    const trimmed = val.trim()
+    // Handle x.com or twitter.com profile URLs
+    const match = trimmed.match(/(?:https?:\/\/)?(?:www\.)?(?:x\.com|twitter\.com)\/(@?[\w]+)/i)
+    if (match) return match[1].replace(/^@/, '')
+    // Strip leading @
+    return trimmed.replace(/^@/, '')
+  }
+
+  const handleUsernameChange = (e) => {
+    setUsername(parseUsername(e.target.value))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -59,13 +72,13 @@ export default function AddTroll() {
       <div className="form-section">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">X Username *</label>
+            <label htmlFor="username">X Username or Profile Link *</label>
             <input
               id="username"
               type="text"
-              placeholder="@username"
+              placeholder="@username or https://x.com/username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={handleUsernameChange}
               required
               className="x-input"
             />
