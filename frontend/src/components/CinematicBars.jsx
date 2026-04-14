@@ -35,7 +35,6 @@ export default function CinematicBars({ children, onDismiss }) {
     return scrollY.on('change', (v) => {
       if (v > fadeRange && !dismissed) {
         setDismissed(true)
-        sessionStorage.setItem('introSeen', '1')
         if (onDismiss) onDismiss()
       }
     })

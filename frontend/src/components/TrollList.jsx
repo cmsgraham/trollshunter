@@ -63,11 +63,12 @@ export default function TrollList() {
     setSearch(searchInput)
   }
 
-  const [introSeen, setIntroSeen] = useState(() => !!sessionStorage.getItem('introSeen'))
+  // introSeen is only checked on mount — never changed mid-session to avoid layout shift
+  const [introSeen] = useState(() => !!sessionStorage.getItem('introSeen'))
 
+  // When bars dismiss, just mark sessionStorage for next visit (no layout change now)
   const handleIntroDismiss = useCallback(() => {
-    setIntroSeen(true)
-    requestAnimationFrame(() => window.scrollTo(0, 0))
+    sessionStorage.setItem('introSeen', '1')
   }, [])
 
   const totalPages = Math.ceil(total / 20)
