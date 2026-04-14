@@ -334,14 +334,18 @@ export function createGame(canvas, onStateChange) {
             enemies.splice(ei, 1)
             audio.destroy()
 
+            // Emergency heart drop — independent of normal powerups
+            const heartChance = lives <= 1 ? 0.06 : lives <= 2 ? 0.025 : 0
+            if (lives < C.MAX_LIVES && heartChance > 0 && Math.random() < heartChance) {
+              powerups.push({ type: 'life', x: e.x, y: e.y })
+            }
+
             // Power-up drop
             if (Math.random() < C.POWERUP_DROP_CHANCE) {
               const roll = Math.random()
-              // Life drops slightly more often when player is low on lives
-              const lifeChance = lives <= 1 ? 0.08 : lives <= 2 ? 0.05 : 0.03
               let ptype
-              if (roll < lifeChance) ptype = 'life'
-              else if (roll < lifeChance + 0.04) ptype = 'shield'
+              if (roll < 0.03) ptype = 'life'
+              else if (roll < 0.07) ptype = 'shield'
               else if (roll < 0.20) ptype = 'penta'
               else if (roll < 0.35) ptype = 'quad'
               else if (roll < 0.55) ptype = 'triple'
