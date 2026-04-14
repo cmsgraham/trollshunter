@@ -53,8 +53,23 @@ export default function TrollList() {
   return (
     <>
       {/* Mobile cinematic bars intro — hidden on desktop */}
-      <CinematicBars total={total}>
+      <CinematicBars>
         <div className="bars-feed-inner">
+          {/* Intro section */}
+          <section className="intro-section">
+            <h2>Take back your timeline</h2>
+            <p>
+              Trolls thrive on attention. They provoke, insult, and derail conversations 
+              to get a reaction out of you. The best thing you can do is <strong>not play their game</strong>.
+            </p>
+            <p>
+              Don't argue, don't engage, don't feed them. Block, report, and move on. 
+              TrollsHunter is a community-driven blocklist — we identify and catalog the worst 
+              offenders so you can protect your feed before they ever reach you.
+            </p>
+            <p className="intro-cta">Scroll down to explore the blocklist.</p>
+          </section>
+
           {/* Sticky search + filters on mobile */}
           <div className="mobile-sticky-controls">
             <div className="search-bar-wrapper">

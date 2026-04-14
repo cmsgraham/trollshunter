@@ -8,7 +8,7 @@ import { motion, useScroll, useTransform } from 'framer-motion'
  * As the user scrolls, the overlay fades/scales out over 300px of scroll,
  * revealing the feed content underneath. Simple, performant, no nested scroll.
  */
-export default function CinematicBars({ children, total }) {
+export default function CinematicBars({ children }) {
   const [dismissed, setDismissed] = useState(false)
   const scrollContainer = useRef(null)
 
@@ -28,9 +28,7 @@ export default function CinematicBars({ children, total }) {
   // --- Glow ---
   const glowOpacity = useTransform(scrollY, [0, fadeRange * 0.3, fadeRange * 0.7], [0.7, 0.5, 0])
 
-  // --- Title ---
-  const titleOpacity = useTransform(scrollY, [0, fadeRange * 0.4], [1, 0])
-  const titleY = useTransform(scrollY, [0, fadeRange * 0.4], [0, -24])
+
 
   // Once fully scrolled past, remove from DOM to ensure no pointer interference
   useEffect(() => {
@@ -71,13 +69,6 @@ export default function CinematicBars({ children, total }) {
             className="bars-shield-img"
             draggable={false}
           />
-          <motion.div
-            className="bars-title"
-            style={{ opacity: titleOpacity, y: titleY }}
-          >
-            <h1>Community Blocklist</h1>
-            <p>{total} accounts reported</p>
-          </motion.div>
         </motion.div>
 
         {/* Bottom vignette */}
