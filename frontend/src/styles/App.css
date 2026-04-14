@@ -1319,6 +1319,10 @@ a:hover { color: var(--accent-hover); }
     padding-top: 30vh;
   }
 
+  .bars-feed-inner.no-intro {
+    padding-top: 0;
+  }
+
   .mobile-sticky-controls {
     position: sticky;
     top: 0;

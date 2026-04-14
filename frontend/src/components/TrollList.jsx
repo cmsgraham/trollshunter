@@ -63,29 +63,38 @@ export default function TrollList() {
     setSearch(searchInput)
   }
 
+  const [introSeen] = useState(() => {
+    const seen = sessionStorage.getItem('introSeen')
+    if (!seen) sessionStorage.setItem('introSeen', '1')
+    return !!seen
+  })
+
   const totalPages = Math.ceil(total / 20)
 
   return (
     <>
-      {/* Mobile intro — sits above the bars overlay */}
-      <section className="intro-section">
-        <img
-          src="/logos/trolls_hunter_full_logo.png"
-          alt="TrollsHunter"
-          className="intro-logo"
-          draggable={false}
-        />
-        <h2>{intro.heading}</h2>
-        <p>
-          {intro.p1} <strong>{intro.p1Bold}</strong>.
-        </p>
-        <p>{intro.p2}</p>
-        <p className="intro-cta">{intro.cta}</p>
-      </section>
+      {/* Mobile intro — only on first visit this session */}
+      {!introSeen && (
+        <section className="intro-section">
+          <img
+            src="/logos/trolls_hunter_full_logo.png"
+            alt="TrollsHunter"
+            className="intro-logo"
+            draggable={false}
+          />
+          <h2>{intro.heading}</h2>
+          <p>
+            {intro.p1} <strong>{intro.p1Bold}</strong>.
+          </p>
+          <p>{intro.p2}</p>
+          <p className="intro-cta">{intro.cta}</p>
+        </section>
+      )}
 
-      {/* Mobile cinematic bars — hidden on desktop */}
-      <CinematicBars>
-        <div className="bars-feed-inner">
+      {/* Mobile cinematic bars — only on first visit this session */}
+      {!introSeen ? (
+        <CinematicBars>
+          <div className="bars-feed-inner">
           {/* Sticky search + filters on mobile */}
           <div className="mobile-sticky-controls">
             <div className="search-bar-wrapper">
@@ -145,6 +154,66 @@ export default function TrollList() {
           </div>
         </div>
       </CinematicBars>
+      ) : (
+        <div className="bars-feed-inner no-intro">
+          <div className="mobile-sticky-controls">
+            <div className="search-bar-wrapper">
+              <form onSubmit={handleSearch} className="search-bar">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.824 5.262l4.781 4.781-1.414 1.414-4.781-4.781c-1.447 1.142-3.276 1.824-5.262 1.824-4.694 0-8.5-3.806-8.5-8.5z"/>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search accounts"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                />
+              </form>
+            </div>
+            <div className="filter-tabs">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  className={`filter-tab${category === cat ? ' active' : ''}`}
+                  onClick={() => { setCategory(cat); setPage(1) }}
+                >
+                  {categoryLabels[cat]}
+                </button>
+              ))}
+            </div>
+            <div className="sort-wrapper">
+              <div className="sort-group">
+                <select
+                  value={country}
+                  onChange={(e) => { setCountry(e.target.value); setPage(1) }}
+                  className="sort-select"
+                >
+                  <option value="">🌍 All Countries</option>
+                  {COUNTRIES.map(c => (
+                    <option key={c.code} value={c.code}>{c.name}{c.code === detectedCountry ? ' (you)' : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="sort-group">
+                <select
+                  value={sortBy}
+                  onChange={(e) => { setSortBy(e.target.value); setPage(1) }}
+                  className="sort-select"
+                >
+                  <option value="upvotes">Most Confirmed</option>
+                  <option value="total_reports">Most Reported</option>
+                  <option value="created_at">Newest</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div className="troll-feed">
+            {trolls.map(troll => (
+              <TrollCard key={troll.id} troll={troll} onRefresh={loadTrolls} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Desktop intro + header */}
       <div className="page-top-bar">
