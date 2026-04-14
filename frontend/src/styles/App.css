@@ -1525,38 +1525,33 @@ a:hover { color: var(--accent-hover); }
   justify-content: space-between;
   width: 100%;
   max-width: 400px;
-  padding: 10px 12px;
+  padding: 4px 8px;
   box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .ti-back,
 .ti-mute {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.8rem;
-  font-family: monospace;
+  color: rgba(255, 255, 255, 0.3);
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 6px;
+  padding: 6px;
+  border-radius: 50%;
   transition: color 0.15s, background 0.15s;
+  pointer-events: all;
 }
 
 .ti-back:hover,
 .ti-mute:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.ti-title {
-  font-family: monospace;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #e8651a;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .ti-canvas-wrap {
@@ -1568,8 +1563,9 @@ a:hover { color: var(--accent-hover); }
   justify-content: center;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(232, 101, 26, 0.15);
-  box-shadow: 0 0 40px rgba(232, 101, 26, 0.08);
+  border: 1px solid rgba(232, 101, 26, 0.1);
+  box-shadow: 0 0 50px rgba(232, 101, 26, 0.06);
+  position: relative;
 }
 
 .ti-canvas {
@@ -1595,6 +1591,11 @@ a:hover { color: var(--accent-hover); }
 @media (max-width: 700px) {
   .ti-wrapper {
     min-height: calc(100vh - 56px);
+  }
+  body.ti-playing .mobile-nav {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
   }
   .ti-canvas-wrap {
     max-width: 100%;

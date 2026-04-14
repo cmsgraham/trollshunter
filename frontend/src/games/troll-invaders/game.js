@@ -43,13 +43,20 @@ export function createGame(canvas, onStateChange) {
   let shieldTimer = 0
   let nextLifeAt = C.LIFE_SCORE_INTERVAL
 
-  // Stars
-  const stars = Array.from({ length: 80 }, () => ({
+  // Stars — two parallax layers
+  const starsBack = Array.from({ length: 60 }, () => ({
     x: Math.random() * C.W,
     y: Math.random() * C.H,
-    s: 8 + Math.random() * 25,
-    r: Math.random() < 0.3 ? 1.5 : 0.8,
-    b: 0.3 + Math.random() * 0.5,
+    s: 6 + Math.random() * 12,
+    r: 0.6 + Math.random() * 0.3,
+    b: 0.15 + Math.random() * 0.25,
+  }))
+  const starsFront = Array.from({ length: 35 }, () => ({
+    x: Math.random() * C.W,
+    y: Math.random() * C.H,
+    s: 18 + Math.random() * 35,
+    r: 1 + Math.random() * 0.8,
+    b: 0.35 + Math.random() * 0.45,
   }))
 
   // ─── INPUT ────────────────────────────────────────────
@@ -443,6 +450,7 @@ export function createGame(canvas, onStateChange) {
 
     // Shake decay
     shakeAmt *= 0.88
+    if (lifeLostTimer > 0) lifeLostTimer -= dt
 
     // Wave clear check
     if (enemies.length === 0 && state === 'PLAYING') {
@@ -456,9 +464,12 @@ export function createGame(canvas, onStateChange) {
     updateStars(dt)
   }
 
+  let lifeLostTimer = 0
+
   function hitPlayer() {
     if (invulnTimer > 0) return
     lives--
+    lifeLostTimer = 0.4
     streak = 0
     invulnTimer = 1.5
     shakeAmt = 8
@@ -475,7 +486,11 @@ export function createGame(canvas, onStateChange) {
   }
 
   function updateStars(dt) {
-    for (const s of stars) {
+    for (const s of starsBack) {
+      s.y += s.s * dt
+      if (s.y > C.H) { s.y = -2; s.x = Math.random() * C.W }
+    }
+    for (const s of starsFront) {
       s.y += s.s * dt
       if (s.y > C.H) { s.y = -2; s.x = Math.random() * C.W }
     }
@@ -493,10 +508,16 @@ export function createGame(canvas, onStateChange) {
     ctx.fillStyle = C.BG
     ctx.fillRect(-4, -4, C.W + 8, C.H + 8)
 
-    // Stars
-    for (const s of stars) {
+    // Stars — back layer (dim, slow)
+    for (const s of starsBack) {
       ctx.globalAlpha = s.b
-      ctx.fillStyle = '#8888cc'
+      ctx.fillStyle = '#6666aa'
+      ctx.fillRect(Math.floor(s.x), Math.floor(s.y), s.r, s.r)
+    }
+    // Stars — front layer (bright, fast)
+    for (const s of starsFront) {
+      ctx.globalAlpha = s.b
+      ctx.fillStyle = '#aaaadd'
       ctx.fillRect(Math.floor(s.x), Math.floor(s.y), s.r, s.r)
     }
     ctx.globalAlpha = 1
@@ -507,11 +528,16 @@ export function createGame(canvas, onStateChange) {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(C.W, y); ctx.stroke()
     }
 
-    // Enemies
+    // Enemies — squash/stretch idle with subtle blink
     for (const e of enemies) {
       const sprite = e.flash > 0 ? spr[e.type + 'Hit'] || spr[e.type] : spr[e.type]
-      const wobble = Math.sin(e.anim) * 0.8
-      drawSprite(sprite, e.x, e.y + wobble, e.scale || 2)
+      const wobbleY = Math.sin(e.anim) * 0.8
+      const squash = 1 + Math.sin(e.anim * 1.7) * 0.06
+      const stretch = 1 - Math.sin(e.anim * 1.7) * 0.06
+      const sc = e.scale || 2
+      const w = sprite.width * sc * squash
+      const h = sprite.height * sc * stretch
+      ctx.drawImage(sprite, Math.floor(e.x - w / 2), Math.floor(e.y + wobbleY - h / 2), w, h)
     }
 
     // Player
@@ -522,9 +548,27 @@ export function createGame(canvas, onStateChange) {
       }
     }
 
-    // Bullets
-    for (const b of bullets) drawSprite(spr.bullet, b.x, b.y, 1.5)
-    for (const b of eBullets) drawSprite(spr.enemyBullet, b.x, b.y, 1.5)
+    // Bullets with glow
+    ctx.save()
+    for (const b of bullets) {
+      ctx.globalAlpha = 0.15
+      ctx.fillStyle = '#ff9944'
+      ctx.beginPath()
+      ctx.arc(b.x, b.y, 5, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalAlpha = 1
+      drawSprite(spr.bullet, b.x, b.y, 1.5)
+    }
+    for (const b of eBullets) {
+      ctx.globalAlpha = 0.12
+      ctx.fillStyle = '#66ff66'
+      ctx.beginPath()
+      ctx.arc(b.x, b.y, 4, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalAlpha = 1
+      drawSprite(spr.enemyBullet, b.x, b.y, 1.5)
+    }
+    ctx.restore()
 
     // Power-ups
     const PSPRITE_MAP = { dual: 'powerupDual', triple: 'powerupTriple', quad: 'powerupQuad', penta: 'powerupPenta', shield: 'powerupShield', life: 'powerupLife' }
@@ -638,41 +682,65 @@ export function createGame(canvas, onStateChange) {
   }
 
   function renderHUD() {
-    // HUD background
-    ctx.fillStyle = 'rgba(0,0,0,0.45)'
-    ctx.fillRect(0, 0, C.W, 40)
+    // HUD background — gradient fade, not hard bar
+    const hg = ctx.createLinearGradient(0, 0, 0, 38)
+    hg.addColorStop(0, 'rgba(0,0,0,0.55)')
+    hg.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = hg
+    ctx.fillRect(0, 0, C.W, 38)
 
-    ctx.font = 'bold 13px monospace'
-    ctx.textAlign = 'left'
-    ctx.fillStyle = '#fff'
-    ctx.fillText(`SCORE ${score}`, 8, 17)
-    ctx.textAlign = 'right'
-    ctx.fillStyle = 'rgba(255,255,255,0.45)'
-    ctx.font = 'bold 10px monospace'
-    ctx.fillText(`BEST ${best}`, C.W - 8, 17)
+    // WAVE — center, primary, glowing
+    ctx.save()
     ctx.textAlign = 'center'
     ctx.fillStyle = '#e8651a'
-    ctx.font = 'bold 11px monospace'
-    ctx.fillText(`WAVE ${wave}`, C.W / 2, 17)
+    ctx.font = 'bold 14px monospace'
+    ctx.shadowColor = '#e8651a'
+    ctx.shadowBlur = 8
+    ctx.fillText(`WAVE ${wave}`, C.W / 2, 16)
+    ctx.shadowBlur = 0
+    ctx.restore()
 
-    // Lives
+    // SCORE — left, secondary
+    ctx.font = 'bold 11px monospace'
+    ctx.textAlign = 'left'
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.fillText(`${score}`, 8, 16)
+
+    // BEST — right, tertiary
+    ctx.textAlign = 'right'
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'
+    ctx.font = '8px monospace'
+    ctx.fillText(`BEST ${best}`, C.W - 8, 16)
+
+    // Lives — top-right, tight spacing, animate on loss
     for (let i = 0; i < lives; i++) {
-      drawSprite(spr.heart, C.W - 16 - i * 14, 32, 1.5)
+      let sc = 1.3
+      if (lifeLostTimer > 0 && i === lives - 1) {
+        // Pulse the last remaining heart
+        sc = 1.3 + Math.sin(lifeLostTimer * 25) * 0.4
+      }
+      drawSprite(spr.heart, C.W - 12 - i * 11, 28, sc)
+    }
+    // Ghost hearts for lost lives
+    for (let i = lives; i < C.MAX_LIVES; i++) {
+      ctx.globalAlpha = 0.12
+      drawSprite(spr.heart, C.W - 12 - i * 11, 28, 1.3)
+      ctx.globalAlpha = 1
     }
 
     // Streak bar
     if (streak > 0) {
-      const maxW = 70
+      const maxW = 60
       const w = Math.min(maxW, (streak / 15) * maxW)
       const sm = C.STREAK.slice().reverse().find(s => streak >= s.n)
       ctx.fillStyle = sm ? sm.color : '#44ff44'
-      ctx.globalAlpha = 0.6
-      ctx.fillRect(8, 24, w, 4)
+      ctx.globalAlpha = 0.5
+      ctx.fillRect(8, 22, w, 3)
       ctx.globalAlpha = 1
-      ctx.font = 'bold 8px monospace'
+      ctx.font = 'bold 7px monospace'
       ctx.textAlign = 'left'
       ctx.fillStyle = sm ? sm.color : '#aaa'
-      ctx.fillText(`×${streak}`, 10, 36)
+      ctx.fillText(`×${streak}`, 10, 32)
     }
   }
 
@@ -704,15 +772,22 @@ export function createGame(canvas, onStateChange) {
 
   function renderWaveAnnounce() {
     const a = Math.min(1, waveTimer)
+    const scale = 1 + (1 - a) * 0.15
+    ctx.save()
     ctx.globalAlpha = a
     ctx.textAlign = 'center'
+    ctx.translate(C.W / 2, C.H * 0.40)
+    ctx.scale(scale, scale)
     ctx.fillStyle = '#e8651a'
-    ctx.font = 'bold 20px monospace'
-    ctx.fillText(`WAVE ${wave}`, C.W / 2, C.H * 0.42)
-    ctx.fillStyle = '#fff'
+    ctx.font = 'bold 24px monospace'
+    ctx.shadowColor = '#e8651a'
+    ctx.shadowBlur = 16
+    ctx.fillText(`WAVE ${wave}`, 0, 0)
+    ctx.shadowBlur = 0
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'
     ctx.font = '8px monospace'
-    ctx.fillText('Get ready...', C.W / 2, C.H * 0.42 + 20)
-    ctx.globalAlpha = 1
+    ctx.fillText('INCOMING...', 0, 18)
+    ctx.restore()
   }
 
   function renderGameOver() {
