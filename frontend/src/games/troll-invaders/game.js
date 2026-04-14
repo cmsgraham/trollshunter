@@ -36,6 +36,10 @@ export function createGame(canvas, onStateChange) {
   let particles = []
   let pops = [] // text popups
   let streakPop = null
+  let weapon = 'normal' // 'normal' | 'dual' | 'triple'
+  let weaponTimer = 0
+  let powerups = []
+  let gameOverTimer = 0
 
   // Stars
   const stars = Array.from({ length: 80 }, () => ({
@@ -54,7 +58,9 @@ export function createGame(canvas, onStateChange) {
   function kd(e) {
     keys[e.code] = true
     if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') e.preventDefault()
-    if ((e.code === 'Space' || e.code === 'Enter') && state !== 'PLAYING') startGame()
+    if ((e.code === 'Space' || e.code === 'Enter') && state !== 'PLAYING') {
+      if (state !== 'GAME_OVER' || gameOverTimer <= 0) startGame()
+    }
   }
   function ku(e) { keys[e.code] = false }
 
@@ -64,7 +70,9 @@ export function createGame(canvas, onStateChange) {
     const t = e.touches[0]
     touchX = ((t.clientX - rect.left) / rect.width) * C.W
     touching = true
-    if (state !== 'PLAYING') startGame()
+    if (state !== 'PLAYING') {
+      if (state !== 'GAME_OVER' || gameOverTimer <= 0) startGame()
+    }
   }
   function tm(e) {
     e.preventDefault()
@@ -79,11 +87,11 @@ export function createGame(canvas, onStateChange) {
     wave++
     enemies = []
     const rows = Math.min(3 + Math.floor(wave / 3), 7)
-    const cols = Math.min(5 + Math.floor(wave / 4), 9)
-    const gapX = 28
-    const gapY = 24
+    const cols = Math.min(4 + Math.floor(wave / 3), 8)
+    const gapX = 34
+    const gapY = 30
     const startX = (C.W - (cols - 1) * gapX) / 2
-    const startY = 40
+    const startY = 50
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -93,13 +101,14 @@ export function createGame(canvas, onStateChange) {
         if (wave >= 6 && r === 0 && c % 2 === 0) type = 'elite'
         if (wave >= 9 && r < 2 && Math.random() < 0.2) type = 'elite'
 
-        const w = type === 'elite' ? 11 : 9
-        const h = type === 'elite' ? 10 : 8
+        const scale = 2
+        const w = (type === 'elite' ? 11 : 9) * scale
+        const h = (type === 'elite' ? 10 : 8) * scale
         enemies.push({
           type,
           x: startX + c * gapX,
           y: startY + r * gapY,
-          w, h,
+          w, h, scale,
           hp: type === 'elite' ? 2 : 1,
           pts: type === 'troll' ? 10 : type === 'spam' ? 20 : 30,
           flash: 0,
@@ -110,6 +119,7 @@ export function createGame(canvas, onStateChange) {
     // Group movement
     enemies._dir = 1
     enemies._speed = 18 + wave * 3
+    enemies._startCount = enemies.length
     enemies._dropTimer = 0
     enemies._shootMult = 1 + wave * 0.15
   }
@@ -129,6 +139,10 @@ export function createGame(canvas, onStateChange) {
     pops = []
     streakPop = null
     invulnTimer = 0
+    weapon = 'normal'
+    weaponTimer = 0
+    powerups = []
+    gameOverTimer = 0
     state = 'WAVE_CLEAR'
     waveTimer = 1.2
     spawnWave()
@@ -170,7 +184,11 @@ export function createGame(canvas, onStateChange) {
       updateStars(dt)
       return
     }
-    if (state !== 'PLAYING') { updateStars(dt); return }
+    if (state !== 'PLAYING') {
+      updateStars(dt)
+      if (state === 'GAME_OVER' && gameOverTimer > 0) gameOverTimer -= dt
+      return
+    }
 
     // Player movement
     let dx = 0
@@ -187,7 +205,16 @@ export function createGame(canvas, onStateChange) {
     fireTimer -= dt
     const wantShoot = keys.Space || touching
     if (wantShoot && fireTimer <= 0 && bullets.length < C.MAX_BULLETS) {
-      bullets.push({ x: player.x, y: player.y - 6, w: 3, h: 5 })
+      if (weapon === 'triple') {
+        bullets.push({ x: player.x, y: player.y - 6, w: 3, h: 5, vx: 0 })
+        bullets.push({ x: player.x - 8, y: player.y - 4, w: 3, h: 5, vx: -35 })
+        bullets.push({ x: player.x + 8, y: player.y - 4, w: 3, h: 5, vx: 35 })
+      } else if (weapon === 'dual') {
+        bullets.push({ x: player.x - 5, y: player.y - 6, w: 3, h: 5, vx: 0 })
+        bullets.push({ x: player.x + 5, y: player.y - 6, w: 3, h: 5, vx: 0 })
+      } else {
+        bullets.push({ x: player.x, y: player.y - 6, w: 3, h: 5, vx: 0 })
+      }
       fireTimer = C.FIRE_RATE
       audio.shoot()
     }
@@ -195,7 +222,8 @@ export function createGame(canvas, onStateChange) {
     // Update bullets
     bullets = bullets.filter(b => {
       b.y -= C.BULLET_SPEED * dt
-      return b.y > -10
+      b.x += (b.vx || 0) * dt
+      return b.y > -10 && b.x > -10 && b.x < C.W + 10
     })
 
     // Update enemy bullets
@@ -206,7 +234,8 @@ export function createGame(canvas, onStateChange) {
 
     // Enemy movement (group)
     if (enemies.length > 0) {
-      const spd = enemies._speed * (1 + (1 - enemies.length / 40) * 0.8)
+      const ratio = 1 - enemies.length / (enemies._startCount || 40)
+      const spd = enemies._speed * (1 + ratio * 1.5 + (ratio > 0.7 ? (ratio - 0.7) * 5 : 0))
       let minX = Infinity, maxX = -Infinity
       for (const e of enemies) {
         minX = Math.min(minX, e.x - e.w / 2)
@@ -267,6 +296,14 @@ export function createGame(canvas, onStateChange) {
 
             enemies.splice(ei, 1)
             audio.destroy()
+
+            // Power-up drop
+            if (Math.random() < C.POWERUP_DROP_CHANCE) {
+              powerups.push({
+                type: Math.random() < 0.65 ? 'dual' : 'triple',
+                x: e.x, y: e.y,
+              })
+            }
           } else {
             audio.hit()
             shakeAmt = 2
@@ -280,6 +317,28 @@ export function createGame(canvas, onStateChange) {
     if (streak > 0) {
       streakTimer -= dt
       if (streakTimer <= 0) streak = 0
+    }
+
+    // Weapon timer
+    if (weaponTimer > 0) {
+      weaponTimer -= dt
+      if (weaponTimer <= 0) { weapon = 'normal'; weaponTimer = 0 }
+    }
+
+    // Update & collect power-ups
+    const WLEVELS = { normal: 0, dual: 1, triple: 2 }
+    for (let i = powerups.length - 1; i >= 0; i--) {
+      const p = powerups[i]
+      p.y += C.POWERUP_SPEED * dt
+      if (p.y > C.H + 10) { powerups.splice(i, 1); continue }
+      if (Math.abs(p.x - player.x) < 14 && Math.abs(p.y - player.y) < 14) {
+        if (WLEVELS[p.type] >= WLEVELS[weapon]) weapon = p.type
+        weaponTimer = C.POWERUP_DURATION
+        powerups.splice(i, 1)
+        audio.streak()
+        addPop(player.x, player.y - 16, weapon === 'triple' ? 'TRIPLE!' : 'DUAL!', weapon === 'triple' ? '#ff44ff' : '#ffcc00', 10)
+        shakeAmt = 3
+      }
     }
 
     // Collision: enemy bullets → player
@@ -349,6 +408,7 @@ export function createGame(canvas, onStateChange) {
     audio.playerHit()
     if (lives <= 0) {
       state = 'GAME_OVER'
+      gameOverTimer = 1.5
       if (score > best) { best = score; localStorage.setItem('ti_best', best) }
       if (wave > bestWave) { bestWave = wave; localStorage.setItem('ti_bestWave', bestWave) }
       audio.gameOver()
@@ -393,20 +453,50 @@ export function createGame(canvas, onStateChange) {
     for (const e of enemies) {
       const sprite = e.flash > 0 ? spr[e.type + 'Hit'] || spr[e.type] : spr[e.type]
       const wobble = Math.sin(e.anim) * 0.8
-      drawSprite(sprite, e.x, e.y + wobble, 1)
+      drawSprite(sprite, e.x, e.y + wobble, e.scale || 2)
     }
 
     // Player
     if (state === 'PLAYING' || state === 'WAVE_CLEAR') {
       if (invulnTimer <= 0 || Math.floor(invulnTimer * 10) % 2 === 0) {
         const sp = invulnTimer > 0 ? spr.playerHit : spr.player
-        drawSprite(sp, player.x, player.y, 1)
+        drawSprite(sp, player.x, player.y, 2)
       }
     }
 
     // Bullets
-    for (const b of bullets) drawSprite(spr.bullet, b.x, b.y, 1)
-    for (const b of eBullets) drawSprite(spr.enemyBullet, b.x, b.y, 1)
+    for (const b of bullets) drawSprite(spr.bullet, b.x, b.y, 1.5)
+    for (const b of eBullets) drawSprite(spr.enemyBullet, b.x, b.y, 1.5)
+
+    // Power-ups
+    for (const p of powerups) {
+      const bob = Math.sin(Date.now() / 200) * 2
+      const col = p.type === 'triple' ? '#ff44ff' : '#ffcc00'
+      ctx.globalAlpha = 0.25
+      ctx.fillStyle = col
+      ctx.beginPath()
+      ctx.arc(p.x, p.y + bob, 9, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalAlpha = 1
+      drawSprite(spr['powerup' + (p.type === 'triple' ? 'Triple' : 'Dual')], p.x, p.y + bob, 2)
+    }
+
+    // Weapon indicator near player
+    if (weapon !== 'normal' && (state === 'PLAYING' || state === 'WAVE_CLEAR')) {
+      const col = weapon === 'triple' ? '#ff44ff' : '#ffcc00'
+      ctx.font = 'bold 7px monospace'
+      ctx.textAlign = 'center'
+      ctx.globalAlpha = 0.7
+      ctx.fillStyle = col
+      ctx.fillText(weapon === 'triple' ? 'TRIPLE' : 'DUAL', player.x, player.y + 16)
+      const barW = 28
+      const filled = (weaponTimer / C.POWERUP_DURATION) * barW
+      ctx.fillStyle = 'rgba(255,255,255,0.15)'
+      ctx.fillRect(player.x - barW / 2, player.y + 18, barW, 2)
+      ctx.fillStyle = col
+      ctx.fillRect(player.x - barW / 2, player.y + 18, filled, 2)
+      ctx.globalAlpha = 1
+    }
 
     // Particles
     for (const p of particles) {
@@ -469,35 +559,41 @@ export function createGame(canvas, onStateChange) {
   }
 
   function renderHUD() {
-    ctx.font = 'bold 9px monospace'
+    // HUD background
+    ctx.fillStyle = 'rgba(0,0,0,0.45)'
+    ctx.fillRect(0, 0, C.W, 40)
+
+    ctx.font = 'bold 13px monospace'
     ctx.textAlign = 'left'
     ctx.fillStyle = '#fff'
-    ctx.fillText(`SCORE ${score}`, 6, 14)
+    ctx.fillText(`SCORE ${score}`, 8, 17)
     ctx.textAlign = 'right'
-    ctx.fillStyle = 'rgba(255,255,255,0.5)'
-    ctx.fillText(`BEST ${best}`, C.W - 6, 14)
+    ctx.fillStyle = 'rgba(255,255,255,0.45)'
+    ctx.font = 'bold 10px monospace'
+    ctx.fillText(`BEST ${best}`, C.W - 8, 17)
     ctx.textAlign = 'center'
     ctx.fillStyle = '#e8651a'
-    ctx.fillText(`WAVE ${wave}`, C.W / 2, 14)
+    ctx.font = 'bold 11px monospace'
+    ctx.fillText(`WAVE ${wave}`, C.W / 2, 17)
 
     // Lives
     for (let i = 0; i < lives; i++) {
-      drawSprite(spr.heart, C.W - 14 - i * 12, 26, 1)
+      drawSprite(spr.heart, C.W - 16 - i * 14, 32, 1.5)
     }
 
     // Streak bar
     if (streak > 0) {
-      const maxW = 60
+      const maxW = 70
       const w = Math.min(maxW, (streak / 15) * maxW)
       const sm = C.STREAK.slice().reverse().find(s => streak >= s.n)
       ctx.fillStyle = sm ? sm.color : '#44ff44'
       ctx.globalAlpha = 0.6
-      ctx.fillRect(6, 20, w, 3)
+      ctx.fillRect(8, 24, w, 4)
       ctx.globalAlpha = 1
-      ctx.font = '6px monospace'
+      ctx.font = 'bold 8px monospace'
       ctx.textAlign = 'left'
       ctx.fillStyle = sm ? sm.color : '#aaa'
-      ctx.fillText(`×${streak}`, 8, 30)
+      ctx.fillText(`×${streak}`, 10, 36)
     }
   }
 
@@ -541,28 +637,67 @@ export function createGame(canvas, onStateChange) {
   }
 
   function renderGameOver() {
-    ctx.fillStyle = 'rgba(0,0,0,0.7)'
+    ctx.fillStyle = 'rgba(0,0,0,0.75)'
     ctx.fillRect(0, 0, C.W, C.H)
 
     ctx.textAlign = 'center'
+
+    // GAME OVER title with glow
+    ctx.save()
     ctx.fillStyle = '#ff4444'
-    ctx.font = 'bold 20px monospace'
-    ctx.fillText('GAME OVER', C.W / 2, C.H * 0.28)
+    ctx.font = 'bold 28px monospace'
+    ctx.shadowColor = '#ff0000'
+    ctx.shadowBlur = 20
+    ctx.fillText('GAME OVER', C.W / 2, C.H * 0.26)
+    ctx.shadowBlur = 0
+    ctx.restore()
 
+    // Divider
+    ctx.strokeStyle = 'rgba(255,68,68,0.3)'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(C.W * 0.2, C.H * 0.30)
+    ctx.lineTo(C.W * 0.8, C.H * 0.30)
+    ctx.stroke()
+
+    // Score
     ctx.fillStyle = '#fff'
-    ctx.font = '10px monospace'
-    ctx.fillText(`Score: ${score}`, C.W / 2, C.H * 0.40)
-    ctx.fillStyle = score >= best ? '#ffcc00' : 'rgba(255,255,255,0.5)'
-    ctx.fillText(score >= best ? '★ NEW BEST ★' : `Best: ${best}`, C.W / 2, C.H * 0.46)
+    ctx.font = 'bold 14px monospace'
+    ctx.fillText(`SCORE: ${score}`, C.W / 2, C.H * 0.38)
 
-    ctx.fillStyle = 'rgba(255,255,255,0.6)'
-    ctx.font = '8px monospace'
-    ctx.fillText(`Waves: ${wave}   Streak: ${longestStreak}`, C.W / 2, C.H * 0.54)
+    // Best
+    if (score >= best) {
+      ctx.save()
+      ctx.fillStyle = '#ffcc00'
+      ctx.font = 'bold 12px monospace'
+      ctx.shadowColor = '#ffcc00'
+      ctx.shadowBlur = 10
+      ctx.fillText('\u2605 NEW BEST \u2605', C.W / 2, C.H * 0.44)
+      ctx.shadowBlur = 0
+      ctx.restore()
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.4)'
+      ctx.font = '10px monospace'
+      ctx.fillText(`BEST: ${best}`, C.W / 2, C.H * 0.44)
+    }
 
-    ctx.fillStyle = '#e8651a'
-    ctx.font = 'bold 11px monospace'
-    const blink = Math.sin(Date.now() / 300) > 0
-    if (blink) ctx.fillText('TAP OR PRESS SPACE TO RETRY', C.W / 2, C.H * 0.66)
+    // Stats
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'
+    ctx.font = '9px monospace'
+    ctx.fillText(`WAVES ${wave}  \u00b7  STREAK ${longestStreak}`, C.W / 2, C.H * 0.52)
+
+    // PRESS START — only after delay
+    if (gameOverTimer <= 0) {
+      const blink = Math.sin(Date.now() / 400) > 0
+      if (blink) {
+        ctx.fillStyle = '#e8651a'
+        ctx.font = 'bold 13px monospace'
+        ctx.fillText('\u2500 PRESS START \u2500', C.W / 2, C.H * 0.64)
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.3)'
+      ctx.font = '8px monospace'
+      ctx.fillText('SPACE / TAP TO CONTINUE', C.W / 2, C.H * 0.69)
+    }
   }
 
   // ─── GAME LOOP ────────────────────────────────────────
