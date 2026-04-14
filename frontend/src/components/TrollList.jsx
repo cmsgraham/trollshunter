@@ -112,6 +112,31 @@ export default function TrollList() {
                 </button>
               ))}
             </div>
+            <div className="sort-wrapper">
+              <div className="sort-group">
+                <select
+                  value={country}
+                  onChange={(e) => { setCountry(e.target.value); setPage(1) }}
+                  className="sort-select"
+                >
+                  <option value="">🌍 All Countries</option>
+                  {COUNTRIES.map(c => (
+                    <option key={c.code} value={c.code}>{c.name}{c.code === detectedCountry ? ' (you)' : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="sort-group">
+                <select
+                  value={sortBy}
+                  onChange={(e) => { setSortBy(e.target.value); setPage(1) }}
+                  className="sort-select"
+                >
+                  <option value="upvotes">Most Confirmed</option>
+                  <option value="total_reports">Most Reported</option>
+                  <option value="created_at">Newest</option>
+                </select>
+              </div>
+            </div>
           </div>
           <div className="troll-feed">
             {trolls.map(troll => (
@@ -158,8 +183,8 @@ export default function TrollList() {
         ))}
       </div>
 
-      {/* Sort + Country filter (both) */}
-      <div className="sort-wrapper">
+      {/* Sort + Country filter (desktop only) */}
+      <div className="sort-wrapper desktop-only">
         <div className="sort-group">
           <span className="sort-label">Country</span>
           <select
