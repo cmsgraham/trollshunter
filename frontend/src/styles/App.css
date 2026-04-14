@@ -426,6 +426,7 @@ a:hover { color: var(--accent-hover); }
 }
 
 /* === Cinematic Bars (hidden on desktop) === */
+.intro-section { display: none; }
 .bars-fixed-overlay { display: none !important; }
 .bars-feed-inner { display: none; }
 .desktop-only { display: block; }
@@ -1261,8 +1262,17 @@ a:hover { color: var(--accent-hover); }
   }
 
   .intro-section {
+    display: block;
+    position: relative;
+    z-index: 60;
+    background: var(--bg-root);
     text-align: center;
-    padding: 24px 20px 20px;
+    padding: 48px 24px 32px;
+  }
+  .intro-logo {
+    width: 60vw;
+    max-width: 220px;
+    margin-bottom: 24px;
   }
   .intro-section h2 {
     font-size: 1.4rem;
@@ -1282,9 +1292,9 @@ a:hover { color: var(--accent-hover); }
     font-weight: 700;
   }
   .intro-section .intro-cta {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
-    margin-top: 8px;
+    margin-top: 16px;
     margin-bottom: 0;
   }
 
