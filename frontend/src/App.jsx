@@ -9,6 +9,8 @@ import AuthCallback from './components/AuthCallback'
 import Stats from './components/Stats'
 import AdminPanel from './components/AdminPanel'
 import Unsubscribe from './components/Unsubscribe'
+import GamesPage from './components/GamesPage'
+import TrollInvaders from './games/troll-invaders/TrollInvaders'
 import { getMe } from './api/client'
 
 const AuthContext = createContext(null)
@@ -77,6 +79,8 @@ export default function App() {
             <Route path="/stats" element={<Stats />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/games" element={<GamesPage />} />
+            <Route path="/games/troll-invaders" element={<TrollInvaders />} />
           </Routes>
         </main>
         <MobileNav />

@@ -32,6 +32,11 @@ export default function Sidebar() {
             <span>Stats</span>
           </NavLink>
 
+          <NavLink to="/games" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M21 6H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1zm-1 10H4V8h16v8zM6.5 13a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm4-1h2v2h-2v-2zm5.5 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/></svg>
+            <span>Arcade</span>
+          </NavLink>
+
           {user && (
             <NavLink to="/report" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
               <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M3 12c0-4.97 4.03-9 9-9s9 4.03 9 9-4.03 9-9 9-9-4.03-9-9zm10-4h-2v3H8v2h3v3h2v-3h3v-2h-3V8z"/></svg>
