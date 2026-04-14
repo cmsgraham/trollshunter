@@ -1585,14 +1585,13 @@ a:hover { color: var(--accent-hover); }
   letter-spacing: 0.05em;
 }
 
-.ti-touch-zone {
-  display: none;
-}
-
 @media (max-width: 700px) {
   .ti-wrapper {
     min-height: 100vh;
     justify-content: flex-start;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
   body.ti-playing .mobile-nav {
     display: none;
@@ -1603,17 +1602,6 @@ a:hover { color: var(--accent-hover); }
     border-left: none;
     border-right: none;
     flex: 1;
-  }
-  .ti-touch-zone {
-    display: block;
-    width: 100%;
-    height: 72px;
-    flex-shrink: 0;
-    background: rgba(0, 0, 0, 0.9);
-    border-top: 1px solid rgba(232, 101, 26, 0.08);
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
   }
   .ti-controls-hint {
     display: none;

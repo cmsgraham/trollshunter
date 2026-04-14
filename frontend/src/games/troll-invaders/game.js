@@ -863,14 +863,16 @@ export function createGame(canvas, onStateChange) {
   }
 
   // ─── PUBLIC API ───────────────────────────────────────
+  let touchEl = canvas
   return {
-    start() {
+    start(touchTarget) {
+      touchEl = touchTarget || canvas
       window.addEventListener('keydown', kd)
       window.addEventListener('keyup', ku)
-      canvas.addEventListener('touchstart', ts, { passive: false })
-      canvas.addEventListener('touchmove', tm, { passive: false })
-      canvas.addEventListener('touchend', te)
-      canvas.addEventListener('touchcancel', te)
+      touchEl.addEventListener('touchstart', ts, { passive: false })
+      touchEl.addEventListener('touchmove', tm, { passive: false })
+      touchEl.addEventListener('touchend', te)
+      touchEl.addEventListener('touchcancel', te)
       lastTime = performance.now()
       raf = requestAnimationFrame(loop)
       notify()
@@ -879,24 +881,12 @@ export function createGame(canvas, onStateChange) {
       cancelAnimationFrame(raf)
       window.removeEventListener('keydown', kd)
       window.removeEventListener('keyup', ku)
-      canvas.removeEventListener('touchstart', ts)
-      canvas.removeEventListener('touchmove', tm)
-      canvas.removeEventListener('touchend', te)
-      canvas.removeEventListener('touchcancel', te)
+      touchEl.removeEventListener('touchstart', ts)
+      touchEl.removeEventListener('touchmove', tm)
+      touchEl.removeEventListener('touchend', te)
+      touchEl.removeEventListener('touchcancel', te)
     },
     toggleMute() { return audio.toggle() },
-    addTouchZone(el) {
-      el.addEventListener('touchstart', ts, { passive: false })
-      el.addEventListener('touchmove', tm, { passive: false })
-      el.addEventListener('touchend', te)
-      el.addEventListener('touchcancel', te)
-    },
-    removeTouchZone(el) {
-      el.removeEventListener('touchstart', ts)
-      el.removeEventListener('touchmove', tm)
-      el.removeEventListener('touchend', te)
-      el.removeEventListener('touchcancel', te)
-    },
     getState() { return { state, score, best, wave, bestWave } },
   }
 }
