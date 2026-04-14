@@ -68,6 +68,7 @@ export function createGame(canvas, onStateChange) {
 
   function ts(e) {
     e.preventDefault()
+    audio.unlock()
     const rect = canvas.getBoundingClientRect()
     const t = e.touches[0]
     touchX = ((t.clientX - rect.left) / rect.width) * C.W

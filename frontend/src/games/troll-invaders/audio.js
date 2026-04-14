@@ -2,11 +2,26 @@
 
 let actx = null
 let muted = false
+let unlocked = false
 
 function ctx() {
   if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)()
   if (actx.state === 'suspended') actx.resume()
   return actx
+}
+
+// Must be called from a user gesture to unlock audio on iOS/mobile
+function unlock() {
+  if (unlocked) return
+  const a = ctx()
+  if (a.state === 'suspended') a.resume()
+  // Create and play a silent buffer to fully unlock
+  const buf = a.createBuffer(1, 1, a.sampleRate)
+  const src = a.createBufferSource()
+  src.buffer = buf
+  src.connect(a.destination)
+  src.start(0)
+  unlocked = true
 }
 
 function tone(freq, dur, type = 'square', vol = 0.15, slide = 0) {
@@ -50,6 +65,7 @@ export const audio = {
   waveComplete() { tone(440, 0.1, 'square', 0.1); setTimeout(() => tone(554, 0.1, 'square', 0.1), 80); setTimeout(() => tone(659, 0.1, 'square', 0.1), 160); setTimeout(() => tone(880, 0.2, 'square', 0.12), 240) },
   gameOver() { tone(440, 0.2, 'square', 0.12, -200); setTimeout(() => tone(330, 0.2, 'square', 0.12, -200), 200); setTimeout(() => tone(220, 0.4, 'sawtooth', 0.1, -100), 400) },
   click() { tone(660, 0.04, 'square', 0.06) },
+  unlock() { unlock() },
   get muted() { return muted },
   toggle() { muted = !muted; return muted },
 }
