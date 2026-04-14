@@ -15,11 +15,11 @@ export default function CinematicBars({ children, total }) {
   // Track main page scroll position using window scroll
   const { scrollY } = useScroll()
 
-  // Animation range: 0–300px of scroll
-  const fadeRange = 350
+  // Animation range: 0–550px of scroll
+  const fadeRange = 550
 
   // --- Shield transforms ---
-  const overlayOpacity = useTransform(scrollY, [0, fadeRange * 0.5, fadeRange], [1, 0.7, 0])
+  const overlayOpacity = useTransform(scrollY, [0, fadeRange * 0.55, fadeRange], [1, 0.75, 0])
   const overlayScale = useTransform(scrollY, [0, fadeRange], [1, 0.88])
   const overlayY = useTransform(scrollY, [0, fadeRange], [0, -40])
   const overlayBlur = useTransform(scrollY, [fadeRange * 0.4, fadeRange], [0, 8])
