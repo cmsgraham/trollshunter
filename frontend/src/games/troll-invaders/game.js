@@ -200,9 +200,14 @@ export function createGame(canvas, onStateChange) {
     if (keys.ArrowRight || keys.KeyD) dx = 1
     if (touching && touchX !== null) {
       const diff = touchX - player.x
-      if (Math.abs(diff) > 4) dx = diff > 0 ? 1 : -1
+      if (Math.abs(diff) > 2) {
+        // Smooth follow: move proportionally, faster when far
+        const speed = Math.min(C.PLAYER_SPEED * 2.5, Math.abs(diff) * 12)
+        player.x += Math.sign(diff) * speed * dt
+      }
+    } else {
+      player.x += dx * C.PLAYER_SPEED * dt
     }
-    player.x += dx * C.PLAYER_SPEED * dt
     player.x = Math.max(8, Math.min(C.W - 8, player.x))
 
     // Shooting
@@ -270,10 +275,10 @@ export function createGame(canvas, onStateChange) {
         if (e.flash > 0) e.flash -= dt
 
         // Enemy shooting — aggression scales with player weapon
-        const WAGGRO = { normal: 1, dual: 1.15, triple: 1.35, quad: 1.6, penta: 2.0 }
+        const WAGGRO = { normal: 1, dual: 1.08, triple: 1.18, quad: 1.3, penta: 1.45 }
         const weaponAggro = WAGGRO[weapon] || 1
         if (Math.random() < C.ENEMY_SHOOT_CHANCE * enemies._shootMult * weaponAggro * dt * 60) {
-          const bulletSpd = C.ENEMY_BULLET_SPEED * (1 + (weaponAggro - 1) * 0.5)
+          const bulletSpd = C.ENEMY_BULLET_SPEED * (1 + (weaponAggro - 1) * 0.35)
           eBullets.push({ x: e.x, y: e.y + e.h / 2, w: 3, h: 4, spd: bulletSpd })
         }
       }

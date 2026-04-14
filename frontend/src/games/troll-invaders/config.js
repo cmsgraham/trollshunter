@@ -4,7 +4,7 @@ export const C = {
 
   PLAYER_SPEED: 180,
   FIRE_RATE: 0.15,
-  MAX_BULLETS: 15,
+  MAX_BULLETS: 25,
   BULLET_SPEED: 400,
   LIVES: 3,
   MAX_LIVES: 6,
