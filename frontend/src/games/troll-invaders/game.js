@@ -126,7 +126,7 @@ export function createGame(canvas, onStateChange) {
 
   // ─── START / RESET ────────────────────────────────────
   function startGame() {
-    if (state === 'PLAYING') return
+    if (state === 'PLAYING' || state === 'WAVE_CLEAR') return
     score = 0
     lives = C.LIVES
     wave = 0
