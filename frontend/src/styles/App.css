@@ -1527,10 +1527,8 @@ a:hover { color: var(--accent-hover); }
   max-width: 400px;
   padding: 4px 8px;
   box-sizing: border-box;
-  position: absolute;
-  top: 0;
   z-index: 2;
-  pointer-events: none;
+  flex-shrink: 0;
 }
 
 .ti-back,
@@ -1545,7 +1543,6 @@ a:hover { color: var(--accent-hover); }
   padding: 6px;
   border-radius: 50%;
   transition: color 0.15s, background 0.15s;
-  pointer-events: all;
 }
 
 .ti-back:hover,

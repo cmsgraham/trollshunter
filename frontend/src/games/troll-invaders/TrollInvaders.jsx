@@ -4,17 +4,21 @@ import { createGame } from './game'
 
 export default function TrollInvaders() {
   const canvasRef = useRef(null)
+  const zoneRef = useRef(null)
   const gameRef = useRef(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     const canvas = canvasRef.current
+    const zone = zoneRef.current
     if (!canvas) return
     const game = createGame(canvas)
     gameRef.current = game
     game.start()
+    if (zone) game.addTouchZone(zone)
     document.body.classList.add('ti-playing')
     return () => {
+      if (zone) game.removeTouchZone(zone)
       game.destroy()
       document.body.classList.remove('ti-playing')
     }
@@ -22,27 +26,6 @@ export default function TrollInvaders() {
 
   const handleMute = useCallback(() => {
     if (gameRef.current) gameRef.current.toggleMute()
-  }, [])
-
-  // Bottom touch zone — mirrors the canvas touch behavior (smooth follow + auto-fire)
-  const mapTouchX = useCallback((clientX) => {
-    const canvas = canvasRef.current
-    if (!canvas) return null
-    const rect = canvas.getBoundingClientRect()
-    return ((clientX - rect.left) / rect.width) * 320 // C.W
-  }, [])
-
-  const onZoneTouch = useCallback((e) => {
-    e.preventDefault()
-    const t = e.touches[0]
-    if (!t) return
-    const x = mapTouchX(t.clientX)
-    if (x !== null && gameRef.current) gameRef.current.setTouch(x, true)
-  }, [mapTouchX])
-
-  const onZoneEnd = useCallback((e) => {
-    e.preventDefault()
-    if (gameRef.current) gameRef.current.setTouch(null, false)
   }, [])
 
   return (
@@ -62,13 +45,7 @@ export default function TrollInvaders() {
       <div className="ti-canvas-wrap">
         <canvas ref={canvasRef} className="ti-canvas" />
       </div>
-      <div
-        className="ti-touch-zone"
-        onTouchStart={onZoneTouch}
-        onTouchMove={onZoneTouch}
-        onTouchEnd={onZoneEnd}
-        onTouchCancel={onZoneEnd}
-      />
+      <div className="ti-touch-zone" ref={zoneRef} />
       <div className="ti-controls-hint">
         <span>← → Move</span>
         <span>SPACE Shoot</span>

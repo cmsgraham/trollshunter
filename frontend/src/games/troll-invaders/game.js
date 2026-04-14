@@ -885,7 +885,18 @@ export function createGame(canvas, onStateChange) {
       canvas.removeEventListener('touchcancel', te)
     },
     toggleMute() { return audio.toggle() },
-    setTouch(x, active) { touchX = x; touching = active; if (!active) touchX = null },
+    addTouchZone(el) {
+      el.addEventListener('touchstart', ts, { passive: false })
+      el.addEventListener('touchmove', tm, { passive: false })
+      el.addEventListener('touchend', te)
+      el.addEventListener('touchcancel', te)
+    },
+    removeTouchZone(el) {
+      el.removeEventListener('touchstart', ts)
+      el.removeEventListener('touchmove', tm)
+      el.removeEventListener('touchend', te)
+      el.removeEventListener('touchcancel', te)
+    },
     getState() { return { state, score, best, wave, bestWave } },
   }
 }
