@@ -42,6 +42,7 @@ export function createGame(canvas, onStateChange) {
   let gameOverTimer = 0
   let shieldTimer = 0
   let nextLifeAt = C.LIFE_SCORE_INTERVAL
+  let nukeFlash = 0
 
   // Stars — two parallax layers
   const starsBack = Array.from({ length: 60 }, () => ({
@@ -346,6 +347,7 @@ export function createGame(canvas, onStateChange) {
               let ptype
               if (roll < 0.03) ptype = 'life'
               else if (roll < 0.07) ptype = 'shield'
+              else if (roll < 0.10) ptype = 'bomb'
               else if (roll < 0.20) ptype = 'penta'
               else if (roll < 0.35) ptype = 'quad'
               else if (roll < 0.55) ptype = 'triple'
@@ -378,7 +380,7 @@ export function createGame(canvas, onStateChange) {
 
     // Update & collect power-ups
     const WLEVELS = { normal: 0, dual: 1, triple: 2, quad: 3, penta: 4 }
-    const PFAST = { quad: true, penta: true, shield: true, life: true }
+    const PFAST = { quad: true, penta: true, shield: true, life: true, bomb: true }
     for (let i = powerups.length - 1; i >= 0; i--) {
       const p = powerups[i]
       p.y += (PFAST[p.type] ? C.POWERUP_FAST_SPEED : C.POWERUP_SPEED) * dt
@@ -395,6 +397,26 @@ export function createGame(canvas, onStateChange) {
         } else if (p.type === 'shield') {
           shieldTimer = Math.min(shieldTimer + C.SHIELD_DURATION, C.SHIELD_DURATION)
           addPop(player.x, player.y - 16, 'SHIELD!', '#44ff44', 10)
+        } else if (p.type === 'bomb') {
+          // NUKE — kill all enemies!
+          nukeFlash = 0.6
+          shakeAmt = 15
+          let nukeScore = 0
+          for (const en of enemies) {
+            const color = en.type === 'troll' ? '#44ff44' : en.type === 'spam' ? '#88aaff' : '#ff6633'
+            burst(en.x, en.y, color, 12)
+            nukeScore += en.pts
+          }
+          score += nukeScore
+          if (score >= nextLifeAt && lives < C.MAX_LIVES) {
+            lives++
+            nextLifeAt += C.LIFE_SCORE_INTERVAL
+          }
+          enemies.length = 0
+          eBullets.length = 0
+          addPop(C.W / 2, C.H * 0.35, 'ATOMIC PURGE!', '#ff4444', 14)
+          addPop(C.W / 2, C.H * 0.35 + 18, `+${nukeScore}`, '#ffcc00', 10)
+          audio.nuke()
         } else {
           if (WLEVELS[p.type] >= WLEVELS[weapon]) weapon = p.type
           weaponTimer = C.POWERUP_DURATION
@@ -454,6 +476,7 @@ export function createGame(canvas, onStateChange) {
     // Shake decay
     shakeAmt *= 0.88
     if (lifeLostTimer > 0) lifeLostTimer -= dt
+    if (nukeFlash > 0) nukeFlash -= dt
 
     // Wave clear check
     if (enemies.length === 0 && state === 'PLAYING') {
@@ -574,8 +597,8 @@ export function createGame(canvas, onStateChange) {
     ctx.restore()
 
     // Power-ups
-    const PSPRITE_MAP = { dual: 'powerupDual', triple: 'powerupTriple', quad: 'powerupQuad', penta: 'powerupPenta', shield: 'powerupShield', life: 'powerupLife' }
-    const PCOL_MAP = { dual: '#ffcc00', triple: '#ff44ff', quad: '#44ddff', penta: '#ff6600', shield: '#44ff44', life: '#ff5555' }
+    const PSPRITE_MAP = { dual: 'powerupDual', triple: 'powerupTriple', quad: 'powerupQuad', penta: 'powerupPenta', shield: 'powerupShield', life: 'powerupLife', bomb: 'powerupBomb' }
+    const PCOL_MAP = { dual: '#ffcc00', triple: '#ff44ff', quad: '#44ddff', penta: '#ff6600', shield: '#44ff44', life: '#ff5555', bomb: '#ff4444' }
     for (const p of powerups) {
       const bob = Math.sin(Date.now() / 200) * 2
       const col = PCOL_MAP[p.type] || '#fff'
@@ -667,6 +690,14 @@ export function createGame(canvas, onStateChange) {
     if (state === 'MENU') renderMenu()
     if (state === 'WAVE_CLEAR') renderWaveAnnounce()
     if (state === 'GAME_OVER') renderGameOver()
+
+    // Nuke flash overlay
+    if (nukeFlash > 0) {
+      ctx.globalAlpha = Math.min(0.7, nukeFlash * 1.5)
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, C.W, C.H)
+      ctx.globalAlpha = 1
+    }
 
     // Vignette
     const vg = ctx.createRadialGradient(C.W / 2, C.H / 2, C.H * 0.35, C.W / 2, C.H / 2, C.H * 0.75)

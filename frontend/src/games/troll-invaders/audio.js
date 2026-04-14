@@ -65,6 +65,7 @@ export const audio = {
   waveComplete() { tone(440, 0.1, 'square', 0.1); setTimeout(() => tone(554, 0.1, 'square', 0.1), 80); setTimeout(() => tone(659, 0.1, 'square', 0.1), 160); setTimeout(() => tone(880, 0.2, 'square', 0.12), 240) },
   gameOver() { tone(440, 0.2, 'square', 0.12, -200); setTimeout(() => tone(330, 0.2, 'square', 0.12, -200), 200); setTimeout(() => tone(220, 0.4, 'sawtooth', 0.1, -100), 400) },
   click() { tone(660, 0.04, 'square', 0.06) },
+  nuke() { noise(0.5, 0.25); tone(80, 0.5, 'sawtooth', 0.2, -40); setTimeout(() => tone(60, 0.4, 'sawtooth', 0.15, -30), 200); setTimeout(() => noise(0.3, 0.15), 350) },
   unlock() { unlock() },
   get muted() { return muted },
   toggle() { muted = !muted; return muted },
