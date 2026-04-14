@@ -182,7 +182,7 @@ export function createGame(canvas, onStateChange) {
   }
 
   function addPop(x, y, text, color = '#fff', size = 8) {
-    pops.push({ x, y, text, color, size, life: 0.8, vy: -40 })
+    pops.push({ x, y, text, color, size, life: 0.55, vy: -55 })
   }
 
   // ─── UPDATE ───────────────────────────────────────────
@@ -318,10 +318,8 @@ export function createGame(canvas, onStateChange) {
             streakTimer = 2
             if (streak > longestStreak) longestStreak = streak
 
-            // Kill text
-            const kt = C.KILL_TEXT[Math.floor(Math.random() * C.KILL_TEXT.length)]
-            addPop(e.x, e.y - 6, kt, color, 7)
-            addPop(e.x, e.y + 4, `+${e.pts * (1 + Math.floor(streak / 5))}`, '#fff', 6)
+            // Kill text — show only the score to reduce clutter
+            addPop(e.x, e.y - 4, `+${e.pts * (1 + Math.floor(streak / 5))}`, color, 7)
 
             // Streak milestones
             const sm = C.STREAK.find(s => s.n === streak)
@@ -775,7 +773,7 @@ export function createGame(canvas, onStateChange) {
     ctx.save()
     ctx.globalAlpha = a
     ctx.textAlign = 'center'
-    ctx.translate(C.W / 2, C.H * 0.40)
+    ctx.translate(C.W / 2, C.H * 0.38)
     ctx.scale(scale, scale)
     ctx.fillStyle = '#e8651a'
     ctx.font = 'bold 24px monospace'
@@ -783,9 +781,14 @@ export function createGame(canvas, onStateChange) {
     ctx.shadowBlur = 16
     ctx.fillText(`WAVE ${wave}`, 0, 0)
     ctx.shadowBlur = 0
-    ctx.fillStyle = 'rgba(255,255,255,0.6)'
-    ctx.font = '8px monospace'
-    ctx.fillText('INCOMING...', 0, 18)
+    // Funny troll message
+    const msgs = C.WAVE_MSGS
+    const msg = msgs[Math.min(wave, msgs.length - 1)] || msgs[msgs.length - 1]
+    if (msg) {
+      ctx.fillStyle = 'rgba(255,255,255,0.55)'
+      ctx.font = '8px monospace'
+      ctx.fillText(msg, 0, 18)
+    }
     ctx.restore()
   }
 

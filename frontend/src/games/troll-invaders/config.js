@@ -28,5 +28,29 @@ export const C = {
 
   KILL_TEXT: ['BLOCKED!', 'BANNED!', 'MUTED!', 'REPORTED!', 'SILENCED!'],
 
+  WAVE_MSGS: [
+    '',
+    'The trolls are here...',
+    'They learned to type faster',
+    'Now with worse grammar',
+    'They discovered CAPS LOCK',
+    'Their takes are getting hotter',
+    'They\'re replying to old threads',
+    'Someone shared their opinions',
+    'They found the comment section',
+    'They\'re making alt accounts',
+    'The ratio is getting worse',
+    'They discovered quote tweets',
+    'Their profiles have no photo',
+    'Egg avatars incoming!',
+    'They\'re typing "actually..."',
+    'They won\'t touch grass',
+    'Their moms want them outside',
+    'They\'re citing Wikipedia',
+    'Bold claims, zero sources',
+    'They unionized',
+    'Final form: reply guys',
+  ],
+
   BG: '#0a0a14',
 }
