@@ -30,12 +30,14 @@ export default function CinematicBars({ children }) {
 
 
 
-  // Once fully scrolled past, permanently remove from DOM
+  // Once fully scrolled past, permanently remove from DOM and snap to top
   useEffect(() => {
     return scrollY.on('change', (v) => {
       if (v > fadeRange && !dismissed) {
         setDismissed(true)
         sessionStorage.setItem('introSeen', '1')
+        // Snap scroll to top so feed starts cleanly without a jump
+        requestAnimationFrame(() => window.scrollTo(0, 0))
       }
     })
   }, [scrollY, fadeRange, dismissed])
