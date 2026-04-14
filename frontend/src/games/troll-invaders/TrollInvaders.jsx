@@ -25,12 +25,10 @@ export default function TrollInvaders() {
   }, [])
 
   // Bottom touch zone — mirrors the canvas touch behavior (smooth follow + auto-fire)
-  const canvasWrapRef = useRef(null)
-
   const mapTouchX = useCallback((clientX) => {
-    const wrap = canvasWrapRef.current
-    if (!wrap) return null
-    const rect = wrap.getBoundingClientRect()
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const rect = canvas.getBoundingClientRect()
     return ((clientX - rect.left) / rect.width) * 320 // C.W
   }, [])
 
@@ -61,7 +59,7 @@ export default function TrollInvaders() {
           </svg>
         </button>
       </div>
-      <div className="ti-canvas-wrap" ref={canvasWrapRef}>
+      <div className="ti-canvas-wrap">
         <canvas ref={canvasRef} className="ti-canvas" />
       </div>
       <div
