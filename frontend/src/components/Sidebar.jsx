@@ -1,19 +1,28 @@
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../App'
 
 export default function Sidebar() {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const handleHomeClick = (e) => {
+    if (location.pathname === '/') {
+      e.preventDefault()
+      navigate('/', { replace: true, state: { reset: Date.now() } })
+    }
+  }
 
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
-        <Link to="/" className="sidebar-logo" title="TrollsHunter">
+        <Link to="/" onClick={handleHomeClick} className="sidebar-logo" title="TrollsHunter">
           <img src="/logos/trolls_hunter_full_logo.png" alt="TrollsHunter" className="sidebar-logo-full" />
           <img src="/logos/trolls_hunter_logo_only.png" alt="TrollsHunter" className="sidebar-logo-icon" />
         </Link>
 
         <nav className="sidebar-nav">
-          <NavLink to="/" end className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+          <NavLink to="/" end onClick={handleHomeClick} className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
             <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h13c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696zM12 16.5c-1.933 0-3.5-1.567-3.5-3.5s1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5-1.567 3.5-3.5 3.5z"/></svg>
             <span>Home</span>
           </NavLink>

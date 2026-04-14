@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { fetchTrolls, detectCountry } from '../api/client'
 import { useAuth } from '../App'
 import TrollCard from './TrollCard'
@@ -11,6 +12,7 @@ const categoryLabels = { '': 'All', troll: 'Trolls', bot: 'Bots', spam: 'Spam', 
 
 export default function TrollList() {
   const { user } = useAuth()
+  const location = useLocation()
   const [trolls, setTrolls] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -22,6 +24,17 @@ export default function TrollList() {
   const [sortBy, setSortBy] = useState('upvotes')
   const [error, setError] = useState('')
   const intro = getIntroText()
+
+  // Reset all filters when Home is clicked (location.state.reset changes)
+  useEffect(() => {
+    if (location.state?.reset) {
+      setCategory('')
+      setSearch('')
+      setSearchInput('')
+      setPage(1)
+      window.scrollTo(0, 0)
+    }
+  }, [location.state])
 
   useEffect(() => {
     detectCountry().then(data => {
