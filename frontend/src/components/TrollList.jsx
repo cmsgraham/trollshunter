@@ -55,30 +55,32 @@ export default function TrollList() {
       {/* Mobile cinematic bars intro — hidden on desktop */}
       <CinematicBars total={total}>
         <div className="bars-feed-inner">
-          {/* Search inside cinematic on mobile */}
-          <div className="search-bar-wrapper">
-            <form onSubmit={handleSearch} className="search-bar">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                <path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.824 5.262l4.781 4.781-1.414 1.414-4.781-4.781c-1.447 1.142-3.276 1.824-5.262 1.824-4.694 0-8.5-3.806-8.5-8.5z"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Search accounts"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-            </form>
-          </div>
-          <div className="filter-tabs">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                className={`filter-tab${category === cat ? ' active' : ''}`}
-                onClick={() => { setCategory(cat); setPage(1) }}
-              >
-                {categoryLabels[cat]}
-              </button>
-            ))}
+          {/* Sticky search + filters on mobile */}
+          <div className="mobile-sticky-controls">
+            <div className="search-bar-wrapper">
+              <form onSubmit={handleSearch} className="search-bar">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.824 5.262l4.781 4.781-1.414 1.414-4.781-4.781c-1.447 1.142-3.276 1.824-5.262 1.824-4.694 0-8.5-3.806-8.5-8.5z"/>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search accounts"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                />
+              </form>
+            </div>
+            <div className="filter-tabs">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  className={`filter-tab${category === cat ? ' active' : ''}`}
+                  onClick={() => { setCategory(cat); setPage(1) }}
+                >
+                  {categoryLabels[cat]}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="troll-feed">
             {trolls.map(troll => (

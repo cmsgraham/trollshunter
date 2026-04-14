@@ -1295,6 +1295,14 @@ a:hover { color: var(--accent-hover); }
     padding-top: 52vh;
   }
 
+  .mobile-sticky-controls {
+    position: sticky;
+    top: 0;
+    z-index: 55;
+    background: var(--bg-root);
+    padding-bottom: 8px;
+  }
+
   .mobile-nav {
     display: flex;
     position: fixed;
