@@ -4,6 +4,7 @@ import { useAuth } from '../App'
 import TrollCard from './TrollCard'
 import CinematicBars from './CinematicBars'
 import COUNTRIES from '../data/countries'
+import { getIntroText } from '../data/introText'
 
 const categories = ['', 'troll', 'bot', 'spam', 'hate', 'politics', 'sports', 'entertainment', 'news', 'scam', 'other']
 const categoryLabels = { '': 'All', troll: 'Trolls', bot: 'Bots', spam: 'Spam', hate: 'Hate', politics: 'Politics', sports: 'Sports', entertainment: 'Entertainment', news: 'News', scam: 'Scam', other: 'Other' }
@@ -20,6 +21,7 @@ export default function TrollList() {
   const [searchInput, setSearchInput] = useState('')
   const [sortBy, setSortBy] = useState('upvotes')
   const [error, setError] = useState('')
+  const intro = getIntroText()
 
   useEffect(() => {
     detectCountry().then(data => {
@@ -60,17 +62,12 @@ export default function TrollList() {
           className="intro-logo"
           draggable={false}
         />
-        <h2>Take back your timeline</h2>
+        <h2>{intro.heading}</h2>
         <p>
-          Trolls thrive on attention. They provoke, insult, and derail conversations
-          to get a reaction out of you. The best thing you can do is <strong>not play their game</strong>.
+          {intro.p1} <strong>{intro.p1Bold}</strong>.
         </p>
-        <p>
-          Don't argue, don't engage, don't feed them. Block, report, and move on.
-          TrollsHunter is a community-driven blocklist — we identify and catalog the worst
-          offenders so you can protect your feed before they ever reach you.
-        </p>
-        <p className="intro-cta">↓ Scroll to see who's behind bars</p>
+        <p>{intro.p2}</p>
+        <p className="intro-cta">{intro.cta}</p>
       </section>
 
       {/* Mobile cinematic bars — hidden on desktop */}
