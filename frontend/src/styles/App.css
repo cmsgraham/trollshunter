@@ -1273,17 +1273,6 @@ a:hover { color: var(--accent-hover); }
     background: var(--bg-root);
     text-align: center;
     padding: 48px 24px 32px;
-    max-height: 600px;
-    overflow: hidden;
-    transition: max-height 0.6s ease, padding 0.6s ease, opacity 0.4s ease;
-    opacity: 1;
-  }
-
-  .intro-section.collapsed {
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    opacity: 0;
   }
   .intro-logo {
     width: 60vw;
@@ -1328,11 +1317,6 @@ a:hover { color: var(--accent-hover); }
   .bars-feed-inner {
     display: block;
     padding-top: 30vh;
-    transition: padding-top 0.6s ease;
-  }
-
-  .bars-feed-inner.collapsed {
-    padding-top: 0;
   }
 
   .bars-feed-inner.no-intro {
