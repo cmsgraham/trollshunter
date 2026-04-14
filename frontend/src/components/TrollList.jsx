@@ -121,10 +121,13 @@ export default function TrollList() {
         </div>
       </CinematicBars>
 
-      {/* Sticky top bar (desktop only) */}
+      {/* Desktop intro + header */}
       <div className="page-top-bar">
-        <h1>Community Blocklist</h1>
-        <p className="subtitle">{total} accounts reported by the community</p>
+        <h1>{intro.heading}</h1>
+        <p className="subtitle">
+          {intro.p1} <strong>{intro.p1Bold}</strong>.
+        </p>
+        <p className="subtitle">{intro.p2}</p>
       </div>
 
       {/* Desktop search */}
