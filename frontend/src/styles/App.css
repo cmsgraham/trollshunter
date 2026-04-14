@@ -1311,7 +1311,7 @@ a:hover { color: var(--accent-hover); }
   /* Content behind bars needs initial top margin so it starts below fold */
   .bars-feed-inner {
     display: block;
-    padding-top: 52vh;
+    padding-top: 30vh;
   }
 
   .mobile-sticky-controls {
