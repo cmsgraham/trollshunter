@@ -65,10 +65,12 @@ export default function TrollList() {
 
   // introSeen is only checked on mount — never changed mid-session to avoid layout shift
   const [introSeen] = useState(() => !!sessionStorage.getItem('introSeen'))
+  const [introCollapsed, setIntroCollapsed] = useState(false)
 
-  // When bars dismiss, just mark sessionStorage for next visit (no layout change now)
+  // When bars dismiss, smoothly collapse the intro via CSS transition
   const handleIntroDismiss = useCallback(() => {
     sessionStorage.setItem('introSeen', '1')
+    setIntroCollapsed(true)
   }, [])
 
   const totalPages = Math.ceil(total / 20)
@@ -77,7 +79,7 @@ export default function TrollList() {
     <>
       {/* Mobile intro — only on first visit this session */}
       {!introSeen && (
-        <section className="intro-section">
+        <section className={`intro-section${introCollapsed ? ' collapsed' : ''}`}>
           <img
             src="/logos/trolls_hunter_full_logo.png"
             alt="TrollsHunter"
@@ -96,7 +98,7 @@ export default function TrollList() {
       {/* Mobile cinematic bars — only on first visit this session */}
       {!introSeen ? (
         <CinematicBars onDismiss={handleIntroDismiss}>
-          <div className="bars-feed-inner">
+          <div className={`bars-feed-inner${introCollapsed ? ' collapsed' : ''}`}>
           {/* Sticky search + filters on mobile */}
           <div className="mobile-sticky-controls">
             <div className="search-bar-wrapper">
