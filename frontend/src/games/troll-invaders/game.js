@@ -337,9 +337,11 @@ export function createGame(canvas, onStateChange) {
             // Power-up drop
             if (Math.random() < C.POWERUP_DROP_CHANCE) {
               const roll = Math.random()
+              // Life drops more often when player is low on lives
+              const lifeChance = lives <= 1 ? 0.18 : lives <= 2 ? 0.10 : 0.03
               let ptype
-              if (roll < 0.03) ptype = 'life'
-              else if (roll < 0.08) ptype = 'shield'
+              if (roll < lifeChance) ptype = 'life'
+              else if (roll < lifeChance + 0.05) ptype = 'shield'
               else if (roll < 0.15) ptype = 'penta'
               else if (roll < 0.25) ptype = 'quad'
               else if (roll < 0.48) ptype = 'triple'
@@ -642,7 +644,7 @@ export function createGame(canvas, onStateChange) {
       const s = 1 + (1 - a) * 0.3
       ctx.save()
       ctx.globalAlpha = a
-      ctx.translate(C.W / 2, C.H * 0.38)
+      ctx.translate(C.W / 2, C.H * 0.55)
       ctx.scale(s, s)
       ctx.font = 'bold 16px monospace'
       ctx.textAlign = 'center'
