@@ -337,14 +337,14 @@ export function createGame(canvas, onStateChange) {
             // Power-up drop
             if (Math.random() < C.POWERUP_DROP_CHANCE) {
               const roll = Math.random()
-              // Life drops more often when player is low on lives
-              const lifeChance = lives <= 1 ? 0.18 : lives <= 2 ? 0.10 : 0.03
+              // Life drops slightly more often when player is low on lives
+              const lifeChance = lives <= 1 ? 0.08 : lives <= 2 ? 0.05 : 0.03
               let ptype
               if (roll < lifeChance) ptype = 'life'
-              else if (roll < lifeChance + 0.05) ptype = 'shield'
-              else if (roll < 0.15) ptype = 'penta'
-              else if (roll < 0.25) ptype = 'quad'
-              else if (roll < 0.48) ptype = 'triple'
+              else if (roll < lifeChance + 0.04) ptype = 'shield'
+              else if (roll < 0.20) ptype = 'penta'
+              else if (roll < 0.35) ptype = 'quad'
+              else if (roll < 0.55) ptype = 'triple'
               else ptype = 'dual'
               powerups.push({
                 type: ptype,
@@ -389,7 +389,7 @@ export function createGame(canvas, onStateChange) {
             addPop(player.x, player.y - 16, '+100', '#ffcc00', 10)
           }
         } else if (p.type === 'shield') {
-          shieldTimer = C.SHIELD_DURATION
+          shieldTimer = Math.min(shieldTimer + C.SHIELD_DURATION, C.SHIELD_DURATION)
           addPop(player.x, player.y - 16, 'SHIELD!', '#44ff44', 10)
         } else {
           if (WLEVELS[p.type] >= WLEVELS[weapon]) weapon = p.type
