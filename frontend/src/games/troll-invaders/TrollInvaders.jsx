@@ -24,20 +24,28 @@ export default function TrollInvaders() {
     if (gameRef.current) gameRef.current.toggleMute()
   }, [])
 
-  // Dpad touch handlers
-  const dpad = useCallback((dir, fire) => {
-    if (gameRef.current) gameRef.current.setDpad(dir, fire)
+  // Bottom touch zone — mirrors the canvas touch behavior (smooth follow + auto-fire)
+  const canvasWrapRef = useRef(null)
+
+  const mapTouchX = useCallback((clientX) => {
+    const wrap = canvasWrapRef.current
+    if (!wrap) return null
+    const rect = wrap.getBoundingClientRect()
+    return ((clientX - rect.left) / rect.width) * 320 // C.W
   }, [])
 
-  const onPadStart = useCallback((dir) => (e) => {
+  const onZoneTouch = useCallback((e) => {
     e.preventDefault()
-    dpad(dir, true)
-  }, [dpad])
+    const t = e.touches[0]
+    if (!t) return
+    const x = mapTouchX(t.clientX)
+    if (x !== null && gameRef.current) gameRef.current.setTouch(x, true)
+  }, [mapTouchX])
 
-  const onPadEnd = useCallback((e) => {
+  const onZoneEnd = useCallback((e) => {
     e.preventDefault()
-    dpad(0, false)
-  }, [dpad])
+    if (gameRef.current) gameRef.current.setTouch(null, false)
+  }, [])
 
   return (
     <div className="ti-wrapper">
@@ -53,35 +61,16 @@ export default function TrollInvaders() {
           </svg>
         </button>
       </div>
-      <div className="ti-canvas-wrap">
+      <div className="ti-canvas-wrap" ref={canvasWrapRef}>
         <canvas ref={canvasRef} className="ti-canvas" />
       </div>
-      <div className="ti-dpad">
-        <div
-          className="ti-dpad-zone ti-dpad-left"
-          onTouchStart={onPadStart(-1)}
-          onTouchEnd={onPadEnd}
-          onTouchCancel={onPadEnd}
-        >
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
-        </div>
-        <div
-          className="ti-dpad-zone ti-dpad-fire"
-          onTouchStart={(e) => { e.preventDefault(); dpad(0, true) }}
-          onTouchEnd={onPadEnd}
-          onTouchCancel={onPadEnd}
-        >
-          <span className="ti-dpad-fire-label">FIRE</span>
-        </div>
-        <div
-          className="ti-dpad-zone ti-dpad-right"
-          onTouchStart={onPadStart(1)}
-          onTouchEnd={onPadEnd}
-          onTouchCancel={onPadEnd}
-        >
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-        </div>
-      </div>
+      <div
+        className="ti-touch-zone"
+        onTouchStart={onZoneTouch}
+        onTouchMove={onZoneTouch}
+        onTouchEnd={onZoneEnd}
+        onTouchCancel={onZoneEnd}
+      />
       <div className="ti-controls-hint">
         <span>← → Move</span>
         <span>SPACE Shoot</span>

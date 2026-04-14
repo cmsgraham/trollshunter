@@ -63,8 +63,6 @@ export function createGame(canvas, onStateChange) {
   const keys = {}
   let touchX = null
   let touching = false
-  let dpadDir = 0 // -1 left, 0 none, 1 right
-  let dpadFiring = false
 
   function kd(e) {
     keys[e.code] = true
@@ -208,7 +206,6 @@ export function createGame(canvas, onStateChange) {
     let dx = 0
     if (keys.ArrowLeft || keys.KeyA) dx = -1
     if (keys.ArrowRight || keys.KeyD) dx = 1
-    if (dpadDir !== 0) dx = dpadDir
     if (touching && touchX !== null) {
       const diff = touchX - player.x
       if (Math.abs(diff) > 2) {
@@ -222,7 +219,7 @@ export function createGame(canvas, onStateChange) {
 
     // Shooting
     fireTimer -= dt
-    const wantShoot = keys.Space || touching || dpadFiring
+    const wantShoot = keys.Space || touching
     if (wantShoot && fireTimer <= 0 && bullets.length < C.MAX_BULLETS) {
       if (weapon === 'penta') {
         bullets.push({ x: player.x, y: player.y - 6, w: 3, h: 5, vx: 0 })
@@ -888,7 +885,7 @@ export function createGame(canvas, onStateChange) {
       canvas.removeEventListener('touchcancel', te)
     },
     toggleMute() { return audio.toggle() },
-    setDpad(dir, fire) { dpadDir = dir; dpadFiring = fire },
+    setTouch(x, active) { touchX = x; touching = active; if (!active) touchX = null },
     getState() { return { state, score, best, wave, bestWave } },
   }
 }
