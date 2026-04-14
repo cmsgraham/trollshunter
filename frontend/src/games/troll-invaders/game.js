@@ -41,6 +41,7 @@ export function createGame(canvas, onStateChange) {
   let powerups = []
   let gameOverTimer = 0
   let shieldTimer = 0
+  let nextLifeAt = C.LIFE_SCORE_INTERVAL
 
   // Stars
   const stars = Array.from({ length: 80 }, () => ({
@@ -145,6 +146,7 @@ export function createGame(canvas, onStateChange) {
     powerups = []
     gameOverTimer = 0
     shieldTimer = 0
+    nextLifeAt = C.LIFE_SCORE_INTERVAL
     state = 'WAVE_CLEAR'
     waveTimer = 1.2
     spawnWave()
@@ -241,7 +243,7 @@ export function createGame(canvas, onStateChange) {
 
     // Update enemy bullets
     eBullets = eBullets.filter(b => {
-      b.y += C.ENEMY_BULLET_SPEED * dt
+      b.y += (b.spd || C.ENEMY_BULLET_SPEED) * dt
       return b.y < C.H + 10
     })
 
@@ -267,9 +269,12 @@ export function createGame(canvas, onStateChange) {
         e.anim += dt * 3
         if (e.flash > 0) e.flash -= dt
 
-        // Enemy shooting
-        if (Math.random() < C.ENEMY_SHOOT_CHANCE * enemies._shootMult * dt * 60) {
-          eBullets.push({ x: e.x, y: e.y + e.h / 2, w: 3, h: 4 })
+        // Enemy shooting — aggression scales with player weapon
+        const WAGGRO = { normal: 1, dual: 1.15, triple: 1.35, quad: 1.6, penta: 2.0 }
+        const weaponAggro = WAGGRO[weapon] || 1
+        if (Math.random() < C.ENEMY_SHOOT_CHANCE * enemies._shootMult * weaponAggro * dt * 60) {
+          const bulletSpd = C.ENEMY_BULLET_SPEED * (1 + (weaponAggro - 1) * 0.5)
+          eBullets.push({ x: e.x, y: e.y + e.h / 2, w: 3, h: 4, spd: bulletSpd })
         }
       }
     }
@@ -288,6 +293,15 @@ export function createGame(canvas, onStateChange) {
             const color = e.type === 'troll' ? '#44ff44' : e.type === 'spam' ? '#88aaff' : '#ff6633'
             burst(e.x, e.y, color, 10)
             score += e.pts * (1 + Math.floor(streak / 5))
+
+            // Score milestone extra life
+            if (score >= nextLifeAt && lives < C.MAX_LIVES) {
+              lives++
+              nextLifeAt += C.LIFE_SCORE_INTERVAL
+              addPop(player.x, player.y - 24, '+1 LIFE!', '#ff5555', 10)
+              audio.streak()
+            }
+
             streak++
             streakTimer = 2
             if (streak > longestStreak) longestStreak = streak
@@ -314,10 +328,11 @@ export function createGame(canvas, onStateChange) {
             if (Math.random() < C.POWERUP_DROP_CHANCE) {
               const roll = Math.random()
               let ptype
-              if (roll < 0.05) ptype = 'shield'
-              else if (roll < 0.12) ptype = 'penta'
-              else if (roll < 0.22) ptype = 'quad'
-              else if (roll < 0.45) ptype = 'triple'
+              if (roll < 0.03) ptype = 'life'
+              else if (roll < 0.08) ptype = 'shield'
+              else if (roll < 0.15) ptype = 'penta'
+              else if (roll < 0.25) ptype = 'quad'
+              else if (roll < 0.48) ptype = 'triple'
               else ptype = 'dual'
               powerups.push({
                 type: ptype,
@@ -347,13 +362,21 @@ export function createGame(canvas, onStateChange) {
 
     // Update & collect power-ups
     const WLEVELS = { normal: 0, dual: 1, triple: 2, quad: 3, penta: 4 }
-    const PFAST = { quad: true, penta: true, shield: true }
+    const PFAST = { quad: true, penta: true, shield: true, life: true }
     for (let i = powerups.length - 1; i >= 0; i--) {
       const p = powerups[i]
       p.y += (PFAST[p.type] ? C.POWERUP_FAST_SPEED : C.POWERUP_SPEED) * dt
       if (p.y > C.H + 10) { powerups.splice(i, 1); continue }
       if (Math.abs(p.x - player.x) < 14 && Math.abs(p.y - player.y) < 14) {
-        if (p.type === 'shield') {
+        if (p.type === 'life') {
+          if (lives < C.MAX_LIVES) {
+            lives++
+            addPop(player.x, player.y - 16, '+1 LIFE!', '#ff5555', 10)
+          } else {
+            score += 100
+            addPop(player.x, player.y - 16, '+100', '#ffcc00', 10)
+          }
+        } else if (p.type === 'shield') {
           shieldTimer = C.SHIELD_DURATION
           addPop(player.x, player.y - 16, 'SHIELD!', '#44ff44', 10)
         } else {
@@ -498,8 +521,8 @@ export function createGame(canvas, onStateChange) {
     for (const b of eBullets) drawSprite(spr.enemyBullet, b.x, b.y, 1.5)
 
     // Power-ups
-    const PSPRITE_MAP = { dual: 'powerupDual', triple: 'powerupTriple', quad: 'powerupQuad', penta: 'powerupPenta', shield: 'powerupShield' }
-    const PCOL_MAP = { dual: '#ffcc00', triple: '#ff44ff', quad: '#44ddff', penta: '#ff6600', shield: '#44ff44' }
+    const PSPRITE_MAP = { dual: 'powerupDual', triple: 'powerupTriple', quad: 'powerupQuad', penta: 'powerupPenta', shield: 'powerupShield', life: 'powerupLife' }
+    const PCOL_MAP = { dual: '#ffcc00', triple: '#ff44ff', quad: '#44ddff', penta: '#ff6600', shield: '#44ff44', life: '#ff5555' }
     for (const p of powerups) {
       const bob = Math.sin(Date.now() / 200) * 2
       const col = PCOL_MAP[p.type] || '#fff'
