@@ -63,11 +63,17 @@ export default function TrollList() {
     setSearch(searchInput)
   }
 
-  const [introSeen] = useState(() => {
-    const seen = sessionStorage.getItem('introSeen')
-    if (!seen) sessionStorage.setItem('introSeen', '1')
-    return !!seen
-  })
+  const [introSeen, setIntroSeen] = useState(() => !!sessionStorage.getItem('introSeen'))
+
+  // Listen for sessionStorage changes (set by CinematicBars on dismiss)
+  useEffect(() => {
+    const check = () => {
+      if (sessionStorage.getItem('introSeen')) setIntroSeen(true)
+    }
+    window.addEventListener('storage', check)
+    const interval = setInterval(check, 300)
+    return () => { window.removeEventListener('storage', check); clearInterval(interval) }
+  }, [])
 
   const totalPages = Math.ceil(total / 20)
 

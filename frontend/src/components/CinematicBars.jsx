@@ -30,12 +30,15 @@ export default function CinematicBars({ children }) {
 
 
 
-  // Once fully scrolled past, remove from DOM to ensure no pointer interference
+  // Once fully scrolled past, permanently remove from DOM
   useEffect(() => {
     return scrollY.on('change', (v) => {
-      setDismissed(v > fadeRange)
+      if (v > fadeRange && !dismissed) {
+        setDismissed(true)
+        sessionStorage.setItem('introSeen', '1')
+      }
     })
-  }, [scrollY, fadeRange])
+  }, [scrollY, fadeRange, dismissed])
 
   if (dismissed) {
     return <>{children}</>
