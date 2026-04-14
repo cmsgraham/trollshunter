@@ -1590,12 +1590,10 @@ a:hover { color: var(--accent-hover); }
 
 @media (max-width: 700px) {
   .ti-wrapper {
-    min-height: calc(100vh - 56px);
+    min-height: 100vh;
   }
   body.ti-playing .mobile-nav {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
+    display: none;
   }
   .ti-canvas-wrap {
     max-width: 100%;
