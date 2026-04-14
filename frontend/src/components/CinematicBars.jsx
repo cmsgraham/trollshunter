@@ -19,7 +19,7 @@ export default function CinematicBars({ children }) {
   const fadeRange = 900
 
   // --- Shield transforms ---
-  const overlayOpacity = useTransform(scrollY, [0, fadeRange * 0.55, fadeRange], [1, 0.75, 0])
+  const overlayOpacity = useTransform(scrollY, [0, fadeRange * 0.7, fadeRange * 0.85, fadeRange], [1, 0.95, 0.5, 0])
   const overlayScale = useTransform(scrollY, [0, fadeRange], [1, 0.88])
   const overlayY = useTransform(scrollY, [0, fadeRange], [0, -40])
   const overlayBlur = useTransform(scrollY, [fadeRange * 0.4, fadeRange], [0, 8])
