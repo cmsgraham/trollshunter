@@ -30,7 +30,7 @@ export default function AddTroll() {
 
   const parseUsername = (val) => {
     const trimmed = val.trim()
-    // Handle x.com or twitter.com profile URLs
+    // Handle x.com or twitter.com profile URLs (with optional query params like ?s=21)
     const match = trimmed.match(/(?:https?:\/\/)?(?:www\.)?(?:x\.com|twitter\.com)\/(@?[\w]+)/i)
     if (match) return match[1].replace(/^@/, '')
     // Strip leading @
@@ -76,12 +76,13 @@ export default function AddTroll() {
             <input
               id="username"
               type="text"
-              placeholder="@username or https://x.com/username"
+              placeholder="username, @username, or profile link"
               value={username}
               onChange={handleUsernameChange}
               required
               className="x-input"
             />
+            <span className="form-hint">Paste a profile link like x.com/username?s=21 — we'll extract it automatically.</span>
           </div>
 
           <div className="form-group">

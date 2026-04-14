@@ -695,6 +695,11 @@ a:hover { color: var(--accent-hover); }
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+.form-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
 
 .x-input, .x-textarea {
   background: var(--bg-surface);
